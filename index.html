@@ -1,0 +1,423 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>The Creolization Engine: Emergence Simulator</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&family=JetBrains+Mono:wght@400;700&display=swap');
+        
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #0f172a;
+            color: #e2e8f0;
+        }
+        
+        .mono {
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        canvas {
+            border-radius: 8px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+        }
+
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #1e293b; 
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #475569; 
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #64748b; 
+        }
+    </style>
+</head>
+<body class="h-screen flex flex-col md:flex-row overflow-hidden">
+
+    <!-- Sidebar / Controls -->
+    <div class="w-full md:w-1/3 lg:w-1/4 bg-slate-900 border-r border-slate-700 flex flex-col p-6 overflow-y-auto z-10">
+        <div class="mb-6">
+            <h1 class="text-2xl font-bold text-white mb-2 flex items-center gap-2">
+                <i data-lucide="network"></i> Syntax Sim
+            </h1>
+            <p class="text-xs text-slate-400">Comparing Linguistic Creolization & AI Emergence</p>
+        </div>
+
+        <!-- Simulation Controls -->
+        <div class="space-y-6">
+            
+            <div class="bg-slate-800 p-4 rounded-lg border border-slate-700">
+                <h2 class="text-sm font-semibold text-sky-400 mb-4 uppercase tracking-wider">Parameters</h2>
+                
+                <div class="mb-4">
+                    <label class="block text-xs text-slate-300 mb-1">Agent Population</label>
+                    <input type="range" id="agentCount" min="3" max="15" value="6" class="w-full h-2 bg-slate-600 rounded-lg appearance-none cursor-pointer">
+                    <div class="flex justify-between text-xs text-slate-500">
+                        <span>Sparse</span>
+                        <span>Crowded</span>
+                    </div>
+                </div>
+
+                <div class="mb-4">
+                    <label class="block text-xs text-slate-300 mb-1">Environmental Pressure</label>
+                    <p class="text-[10px] text-slate-500 mb-2">Simulates "Need to Trade" (Humans) or "Loss Function" (AI)</p>
+                    <input type="range" id="pressure" min="1" max="100" value="50" class="w-full h-2 bg-slate-600 rounded-lg appearance-none cursor-pointer">
+                </div>
+
+                <div class="mb-2">
+                    <label class="block text-xs text-slate-300 mb-1">Learning Rate (Neuroplasticity)</label>
+                    <input type="range" id="learningRate" min="1" max="20" value="5" class="w-full h-2 bg-slate-600 rounded-lg appearance-none cursor-pointer">
+                </div>
+            </div>
+
+            <div class="flex gap-2">
+                <button id="startBtn" class="flex-1 bg-sky-600 hover:bg-sky-500 text-white py-2 px-4 rounded font-semibold transition flex justify-center items-center gap-2">
+                    <i data-lucide="play"></i> Start
+                </button>
+                <button id="resetBtn" class="flex-1 bg-slate-700 hover:bg-slate-600 text-white py-2 px-4 rounded font-semibold transition flex justify-center items-center gap-2">
+                    <i data-lucide="rotate-ccw"></i> Reset
+                </button>
+            </div>
+
+            <!-- Stats Panel -->
+            <div class="bg-slate-800 p-4 rounded-lg border border-slate-700">
+                <h2 class="text-sm font-semibold text-emerald-400 mb-2">Live Metrics</h2>
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <p class="text-xs text-slate-400">Coherence</p>
+                        <p id="coherenceStat" class="text-xl font-bold mono">0%</p>
+                    </div>
+                    <div>
+                        <p class="text-xs text-slate-400">Epoch</p>
+                        <p id="epochStat" class="text-xl font-bold mono">0</p>
+                    </div>
+                </div>
+                <div class="mt-4">
+                    <p class="text-xs text-slate-400">Current Phase:</p>
+                    <p id="phaseStat" class="text-sm font-bold text-yellow-400">NOISE</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="mt-auto pt-6 border-t border-slate-800">
+            <div class="text-xs text-slate-500 leading-relaxed">
+                <strong class="text-slate-300">How to read this:</strong><br>
+                Agents (circles) attempt to name an object.
+                <br>• <span class="text-red-400">Red lines</span>: Miscommunication (Pidgin instability).
+                <br>• <span class="text-green-400">Green lines</span>: Agreement (Creole stability/Convergence).
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Visualization Area -->
+    <div class="flex-1 relative bg-slate-950 flex flex-col">
+        <!-- Overlay for Phase Info -->
+        <div id="phaseOverlay" class="absolute top-4 left-4 right-4 z-0 pointer-events-none">
+            <div class="bg-slate-900/80 backdrop-blur border border-slate-700 p-4 rounded text-center max-w-2xl mx-auto transition-opacity duration-500 opacity-0" id="infoBox">
+                <h3 id="infoTitle" class="text-lg font-bold text-white mb-1">Phase Title</h3>
+                <p id="infoDesc" class="text-sm text-slate-300">Phase description goes here.</p>
+            </div>
+        </div>
+
+        <canvas id="simCanvas" class="w-full h-full block"></canvas>
+
+        <!-- Log Output -->
+        <div class="h-48 bg-slate-900 border-t border-slate-700 p-4 font-mono text-xs overflow-y-auto" id="logContainer">
+            <div class="text-slate-500 mb-2">System Initialized. Waiting to start...</div>
+        </div>
+    </div>
+
+    <script>
+        // --- Icons ---
+        lucide.createIcons();
+
+        // --- Config ---
+        const canvas = document.getElementById('simCanvas');
+        const ctx = canvas.getContext('2d');
+        const logContainer = document.getElementById('logContainer');
+        
+        let agents = [];
+        let particles = [];
+        let connections = [];
+        let coherence = 0;
+        let epoch = 0;
+        let isRunning = false;
+        let animationId;
+        
+        // Lexicon: Words that agents can use. 
+        // In the beginning, they pick randomly. Pressure forces them to align.
+        const possibleWords = ["KA", "LO", "MI", "SU", "PA", "TE", "NI", "VO"];
+        const objectConcept = "FOOD"; // The concept they are trying to name
+
+        // State Machine for Phases
+        const PHASES = {
+            NOISE: { name: "Pre-Pidgin / Noise", color: "#facc15", desc: "Agents use random tokens. No standard exists. High entropy." },
+            PIDGIN: { name: "Pidgin / Negotiation", color: "#fb923c", desc: "High-frequency interaction. Temporary norms emerge but are unstable." },
+            CREOLE: { name: "Creole / Emergence", color: "#4ade80", desc: "Structure stabilizes. Rules are grammaticalized (native). 100% Alignment." }
+        };
+        let currentPhase = PHASES.NOISE;
+
+        // --- Classes ---
+
+        class Agent {
+            constructor(id, x, y) {
+                this.id = id;
+                this.x = x;
+                this.y = y;
+                this.vx = (Math.random() - 0.5) * 0.5;
+                this.vy = (Math.random() - 0.5) * 0.5;
+                this.radius = 20;
+                // Vocabulary: Map of Concept -> Word + Confidence
+                this.vocab = {
+                    [objectConcept]: { word: getRandomWord(), confidence: 0.1 }
+                };
+            }
+
+            update() {
+                // Gentle floating movement
+                this.x += this.vx;
+                this.y += this.vy;
+
+                // Bounds checking
+                if (this.x < this.radius || this.x > canvas.width - this.radius) this.vx *= -1;
+                if (this.y < this.radius || this.y > canvas.height - this.radius) this.vy *= -1;
+            }
+
+            draw() {
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+                ctx.fillStyle = isRunning ? '#38bdf8' : '#64748b';
+                ctx.fill();
+                ctx.strokeStyle = '#0f172a';
+                ctx.lineWidth = 3;
+                ctx.stroke();
+
+                // Draw current preferred word
+                ctx.fillStyle = '#fff';
+                ctx.font = '10px JetBrains Mono';
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.fillText(this.vocab[objectConcept].word, this.x, this.y);
+            }
+        }
+
+        class Connection {
+            constructor(a, b, success) {
+                this.a = a;
+                this.b = b;
+                this.life = 1.0;
+                this.success = success;
+            }
+
+            update() {
+                this.life -= 0.02;
+            }
+
+            draw() {
+                if (this.life <= 0) return;
+                ctx.beginPath();
+                ctx.moveTo(this.a.x, this.a.y);
+                ctx.lineTo(this.b.x, this.b.y);
+                ctx.strokeStyle = this.success 
+                    ? `rgba(74, 222, 128, ${this.life})` // Green
+                    : `rgba(248, 113, 113, ${this.life})`; // Red
+                ctx.lineWidth = 2;
+                ctx.stroke();
+            }
+        }
+
+        // --- Helpers ---
+
+        function getRandomWord() {
+            return possibleWords[Math.floor(Math.random() * possibleWords.length)];
+        }
+
+        function resize() {
+            canvas.width = canvas.parentElement.offsetWidth;
+            canvas.height = canvas.parentElement.offsetHeight;
+        }
+
+        function log(msg, type = 'neutral') {
+            const div = document.createElement('div');
+            const timestamp = new Date().toLocaleTimeString().split(' ')[0];
+            div.innerHTML = `<span class="text-slate-600">[${timestamp}]</span> ${msg}`;
+            
+            if (type === 'success') div.classList.add('text-emerald-400');
+            else if (type === 'fail') div.classList.add('text-red-400');
+            else if (type === 'phase') div.classList.add('text-yellow-400', 'font-bold', 'mt-2', 'mb-2');
+            else div.classList.add('text-slate-300');
+
+            logContainer.appendChild(div);
+            logContainer.scrollTop = logContainer.scrollHeight;
+        }
+
+        function init() {
+            agents = [];
+            connections = [];
+            coherence = 0;
+            epoch = 0;
+            currentPhase = PHASES.NOISE;
+            
+            const count = parseInt(document.getElementById('agentCount').value);
+            
+            for (let i = 0; i < count; i++) {
+                // Scatter them in a circle
+                const angle = (i / count) * Math.PI * 2;
+                const radius = Math.min(canvas.width, canvas.height) * 0.3;
+                const x = canvas.width / 2 + Math.cos(angle) * radius;
+                const y = canvas.height / 2 + Math.sin(angle) * radius;
+                agents.push(new Agent(i, x, y));
+            }
+            
+            draw();
+            updateStats();
+        }
+
+        // --- Simulation Logic ---
+
+        function interact() {
+            // Randomly pick two agents to interact
+            const idx1 = Math.floor(Math.random() * agents.length);
+            let idx2 = Math.floor(Math.random() * agents.length);
+            while(idx1 === idx2) idx2 = Math.floor(Math.random() * agents.length);
+
+            const a1 = agents[idx1];
+            const a2 = agents[idx2];
+            
+            const word1 = a1.vocab[objectConcept].word;
+            const word2 = a2.vocab[objectConcept].word;
+            
+            let success = false;
+            const learningRate = parseInt(document.getElementById('learningRate').value) / 200; // 0.01 to 0.1
+
+            // Interaction logic inspired by naming games
+            if (word1 === word2) {
+                // Reinforcement
+                a1.vocab[objectConcept].confidence = Math.min(1, a1.vocab[objectConcept].confidence + learningRate);
+                a2.vocab[objectConcept].confidence = Math.min(1, a2.vocab[objectConcept].confidence + learningRate);
+                success = true;
+            } else {
+                // Failure -> Adaptation
+                // The listener (a2) might adopt the speaker's (a1) word based on confidence comparison
+                if (a1.vocab[objectConcept].confidence > a2.vocab[objectConcept].confidence) {
+                    a2.vocab[objectConcept].word = word1;
+                    a2.vocab[objectConcept].confidence = 0.2; // Reset confidence slightly
+                } else {
+                    // Or they both diminish confidence in their wrong words
+                    a1.vocab[objectConcept].confidence = Math.max(0.1, a1.vocab[objectConcept].confidence - learningRate);
+                }
+            }
+
+            connections.push(new Connection(a1, a2, success));
+            return success;
+        }
+
+        function calculateCoherence() {
+            // What % of agents have the same dominant word?
+            const wordCounts = {};
+            agents.forEach(a => {
+                const w = a.vocab[objectConcept].word;
+                wordCounts[w] = (wordCounts[w] || 0) + 1;
+            });
+            
+            const maxCount = Math.max(...Object.values(wordCounts));
+            return Math.floor((maxCount / agents.length) * 100);
+        }
+
+        function updatePhase() {
+            const oldPhase = currentPhase;
+            if (coherence < 30) currentPhase = PHASES.NOISE;
+            else if (coherence < 90) currentPhase = PHASES.PIDGIN;
+            else currentPhase = PHASES.CREOLE;
+
+            if (oldPhase !== currentPhase) {
+                log(`Phase Shift Detected: Entered ${currentPhase.name}`, 'phase');
+                const overlay = document.getElementById('infoBox');
+                overlay.style.opacity = 1;
+                document.getElementById('infoTitle').innerText = currentPhase.name;
+                document.getElementById('infoDesc').innerText = currentPhase.desc;
+                document.getElementById('phaseStat').innerText = currentPhase.name.split('/')[0].toUpperCase();
+                document.getElementById('phaseStat').style.color = currentPhase.color;
+            }
+        }
+
+        function loop() {
+            if (!isRunning) return;
+
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            // Simulation Speed based on Pressure
+            const pressure = parseInt(document.getElementById('pressure').value);
+            const loopsPerFrame = Math.max(1, Math.floor(pressure / 10));
+
+            for(let i=0; i<loopsPerFrame; i++) {
+                epoch++;
+                const success = interact();
+                
+                // Only log occasionally to save performance
+                if (epoch % 50 === 0) {
+                    if (success) log(`Agents aligned on "${agents[0].vocab[objectConcept].word}"`, 'success');
+                    else log(`Miscommunication detected`, 'fail');
+                }
+            }
+
+            coherence = calculateCoherence();
+            updatePhase();
+            updateStats();
+
+            // Draw everything
+            agents.forEach(a => { a.update(); a.draw(); });
+            connections = connections.filter(c => c.life > 0);
+            connections.forEach(c => { c.update(); c.draw(); });
+
+            animationId = requestAnimationFrame(loop);
+        }
+
+        function updateStats() {
+            document.getElementById('coherenceStat').innerText = coherence + "%";
+            document.getElementById('epochStat').innerText = epoch;
+        }
+
+        function draw() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            agents.forEach(a => a.draw());
+        }
+
+        // --- Event Listeners ---
+
+        window.addEventListener('resize', () => { resize(); init(); });
+
+        document.getElementById('startBtn').addEventListener('click', () => {
+            if (isRunning) return;
+            isRunning = true;
+            log("Simulation started.", "phase");
+            loop();
+        });
+
+        document.getElementById('resetBtn').addEventListener('click', () => {
+            isRunning = false;
+            cancelAnimationFrame(animationId);
+            init();
+            log("Simulation reset.");
+            document.getElementById('infoBox').style.opacity = 0;
+        });
+
+        document.getElementById('agentCount').addEventListener('change', () => {
+            if(!isRunning) init();
+        });
+
+        // Initialize
+        resize();
+        init();
+
+    </script>
+</body>
+</html>
