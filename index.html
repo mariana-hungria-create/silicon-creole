@@ -3,54 +3,27 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>The Creolization Engine: Emergence Simulator v3</title>
+    <title>Algorithmic Creolization: Isomorphism Simulator</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&family=JetBrains+Mono:wght@400;700&display=swap');
         
-        body {
-            font-family: 'Inter', sans-serif;
-            background-color: #0f172a;
-            color: #e2e8f0;
-        }
-        
-        .mono {
-            font-family: 'JetBrains Mono', monospace;
-        }
-
-        canvas {
-            border-radius: 8px;
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
-        }
+        body { font-family: 'Inter', sans-serif; background-color: #0f172a; color: #e2e8f0; }
+        .mono { font-family: 'JetBrains Mono', monospace; }
+        canvas { border-radius: 8px; }
 
         /* Custom Range Slider Styling */
-        input[type=range] {
-            -webkit-appearance: none; 
-            background: transparent; 
-        }
+        input[type=range] { -webkit-appearance: none; background: transparent; }
         input[type=range]::-webkit-slider-thumb {
-            -webkit-appearance: none;
-            height: 16px;
-            width: 16px;
-            border-radius: 50%;
-            background: #38bdf8;
-            cursor: pointer;
-            margin-top: -6px; 
+            -webkit-appearance: none; height: 16px; width: 16px; border-radius: 50%;
+            background: #38bdf8; cursor: pointer; margin-top: -6px; 
             box-shadow: 0 0 5px rgba(56, 189, 248, 0.5);
         }
         input[type=range]::-webkit-slider-runnable-track {
-            width: 100%;
-            height: 4px;
-            cursor: pointer;
-            background: #334155;
-            border-radius: 2px;
+            width: 100%; height: 4px; cursor: pointer; background: #334155; border-radius: 2px;
         }
-        
-        /* Speed slider specific style */
-        #speedSlider::-webkit-slider-thumb {
-            background: #facc15; /* Yellow for time control */
-        }
+        #speedSlider::-webkit-slider-thumb { background: #facc15; }
     </style>
 </head>
 <body class="h-screen flex flex-col md:flex-row overflow-hidden">
@@ -58,99 +31,77 @@
     <!-- Sidebar / Controls -->
     <div class="w-full md:w-1/3 lg:w-1/4 bg-slate-900 border-r border-slate-700 flex flex-col p-6 overflow-y-auto z-10 shadow-xl">
         <div class="mb-6 border-b border-slate-800 pb-4">
-            <h1 class="text-xl font-bold text-white mb-1 flex items-center gap-2">
-                <i data-lucide="network" class="text-sky-500"></i> Syntax Sim
-                <span class="text-[10px] bg-slate-800 text-slate-400 px-1 rounded border border-slate-700">v3</span>
+            <h1 class="text-lg font-bold text-white mb-1 leading-tight">
+                Algorithmic<br><span class="text-sky-400">Creolization</span>
             </h1>
-            <p class="text-xs text-slate-400">Linguistic Creolization vs. AI Emergence</p>
+            <p class="text-[10px] text-slate-400 mt-2">Correlating Biological Syntax & AI Protocols</p>
         </div>
 
-        <!-- Simulation Controls -->
         <div class="space-y-6">
-            
             <div class="bg-slate-800/50 p-4 rounded-lg border border-slate-700">
                 <h2 class="text-xs font-bold text-sky-400 mb-4 uppercase tracking-wider flex items-center gap-2">
-                    <i data-lucide="sliders"></i> Parameters
+                    <i data-lucide="sliders"></i> Variables
                 </h2>
                 
-                <!-- Agent Count Slider -->
-                <div class="mb-5">
+                <!-- Agent Count -->
+                <div class="mb-4">
                     <div class="flex justify-between items-center mb-1">
-                        <label class="text-xs font-semibold text-slate-200">Population Size</label>
-                        <span id="agentCountVal" class="text-xs font-mono bg-slate-700 px-2 py-0.5 rounded text-white">6</span>
+                        <label class="text-xs font-semibold text-slate-200">Population (N)</label>
+                        <span id="agentCountVal" class="text-xs font-mono bg-slate-700 px-2 py-0.5 rounded text-white">8</span>
                     </div>
                     <input type="range" id="agentCount" min="3" max="20" value="8" class="w-full">
                 </div>
 
-                <!-- Pressure Slider -->
-                <div class="mb-5">
+                <!-- Pressure -->
+                <div class="mb-4">
                     <div class="flex justify-between items-center mb-1">
-                        <label class="text-xs font-semibold text-slate-200">Environmental Pressure</label>
+                        <label class="text-xs font-semibold text-slate-200">Optimization Pressure</label>
                         <span id="pressureVal" class="text-xs font-mono bg-slate-700 px-2 py-0.5 rounded text-white">50</span>
                     </div>
-                    <p class="text-[10px] text-slate-400 mb-2 leading-tight">Cost of miscommunication (Penalty).</p>
+                    <p class="text-[9px] text-slate-400 mb-2">Linguistic Necessity / Loss Function</p>
                     <input type="range" id="pressure" min="1" max="100" value="50" class="w-full">
                 </div>
 
-                <!-- Learning Rate Slider -->
-                <div class="mb-5">
+                <!-- Learning Rate -->
+                <div class="mb-4">
                     <div class="flex justify-between items-center mb-1">
-                        <label class="text-xs font-semibold text-slate-200">Plasticity</label>
+                        <label class="text-xs font-semibold text-slate-200">Plasticity (LR)</label>
                         <span id="learningRateVal" class="text-xs font-mono bg-slate-700 px-2 py-0.5 rounded text-white">5</span>
                     </div>
+                    <p class="text-[9px] text-slate-400 mb-2">Child Acquisition / Weight Update</p>
                     <input type="range" id="learningRate" min="1" max="20" value="5" class="w-full">
                 </div>
 
-                <!-- NEW: Speed Slider -->
+                <!-- Speed -->
                 <div class="mb-2 pt-4 border-t border-slate-700">
                     <div class="flex justify-between items-center mb-1">
-                        <label class="text-xs font-bold text-yellow-400">Visual Speed</label>
+                        <label class="text-xs font-bold text-yellow-400">Simulation Speed</label>
                         <span id="speedVal" class="text-xs font-mono bg-slate-700 px-2 py-0.5 rounded text-white">1x</span>
                     </div>
-                    <p class="text-[10px] text-slate-400 mb-2 leading-tight">Slow down to see individual interactions.</p>
                     <input type="range" id="speedSlider" min="1" max="50" value="5" class="w-full">
-                    <div class="flex justify-between text-[10px] text-slate-500 mt-1">
-                        <span>Slow Motion</span>
-                        <span>Hyper-lapse</span>
-                    </div>
                 </div>
             </div>
 
             <div class="flex gap-2">
-                <button id="startBtn" class="flex-1 bg-sky-600 hover:bg-sky-500 text-white py-2 px-4 rounded font-semibold text-sm transition flex justify-center items-center gap-2 shadow-lg shadow-sky-900/20">
-                    <i data-lucide="play" size="16"></i> Start
+                <button id="startBtn" class="flex-1 bg-sky-600 hover:bg-sky-500 text-white py-2 px-4 rounded font-semibold text-xs uppercase tracking-wide transition shadow-lg shadow-sky-900/20">
+                    Run Experiment
                 </button>
-                <button id="resetBtn" class="flex-1 bg-slate-700 hover:bg-slate-600 text-white py-2 px-4 rounded font-semibold text-sm transition flex justify-center items-center gap-2">
-                    <i data-lucide="rotate-ccw" size="16"></i> Reset
+                <button id="resetBtn" class="flex-1 bg-slate-700 hover:bg-slate-600 text-white py-2 px-4 rounded font-semibold text-xs uppercase tracking-wide transition">
+                    Reset
                 </button>
             </div>
 
-            <!-- Stats Panel -->
-            <div class="bg-slate-800 p-4 rounded-lg border border-slate-700">
-                <h2 class="text-xs font-bold text-emerald-400 mb-3 uppercase tracking-wider flex items-center gap-2">
-                    <i data-lucide="activity"></i> Metrics
-                </h2>
-                <div class="grid grid-cols-2 gap-4 mb-4">
-                    <div class="bg-slate-900/50 p-2 rounded border border-slate-700/50">
-                        <div class="flex items-center gap-1 mb-1">
-                            <i data-lucide="users" size="12" class="text-slate-400"></i>
-                            <span class="text-[10px] font-bold text-slate-400 uppercase">Coherence</span>
-                        </div>
-                        <p id="coherenceStat" class="text-xl font-bold mono text-white">0%</p>
+            <!-- Dual Definition Panel -->
+            <div class="bg-slate-800 p-3 rounded border border-slate-700">
+                <h3 class="text-[10px] font-bold text-slate-500 uppercase mb-2">Current State Interpretation</h3>
+                <div class="grid grid-cols-1 gap-2">
+                    <div class="text-[10px]">
+                        <span class="text-sky-400 font-bold">Linguistics:</span>
+                        <span id="lingState" class="text-slate-300">Pidgin (High Variation)</span>
                     </div>
-                    <div class="bg-slate-900/50 p-2 rounded border border-slate-700/50">
-                        <div class="flex items-center gap-1 mb-1">
-                            <i data-lucide="clock" size="12" class="text-slate-400"></i>
-                            <span class="text-[10px] font-bold text-slate-400 uppercase">Epochs</span>
-                        </div>
-                        <p id="epochStat" class="text-xl font-bold mono text-white">0</p>
-                    </div>
-                </div>
-                <div>
-                    <p class="text-[10px] text-slate-400 mb-1">Evolutionary Phase:</p>
-                    <div class="bg-slate-900 px-3 py-2 rounded border border-slate-700 flex justify-between items-center">
-                        <span id="phaseStat" class="text-xs font-bold text-yellow-400">NOISE</span>
-                        <div id="phaseIndicator" class="w-2 h-2 rounded-full bg-yellow-400 animate-pulse"></div>
+                    <div class="text-[10px]">
+                        <span class="text-emerald-400 font-bold">A.I.:</span>
+                        <span id="aiState" class="text-slate-300">High Loss / Random Weights</span>
                     </div>
                 </div>
             </div>
@@ -159,19 +110,40 @@
 
     <!-- Main Visualization Area -->
     <div class="flex-1 relative bg-slate-950 flex flex-col">
-        <!-- Overlay for Phase Info -->
-        <div id="phaseOverlay" class="absolute top-4 left-4 right-4 z-0 pointer-events-none">
-            <div class="bg-slate-900/90 backdrop-blur-sm border border-slate-600 p-4 rounded-lg text-center max-w-xl mx-auto transition-all duration-500 opacity-0 transform translate-y-[-10px]" id="infoBox">
-                <h3 id="infoTitle" class="text-lg font-bold text-white mb-1">Phase Title</h3>
-                <p id="infoDesc" class="text-sm text-slate-300">Phase description goes here.</p>
+        
+        <!-- Top: Simulation Canvas -->
+        <div class="relative flex-grow h-2/3 bg-slate-950">
+             <!-- Overlay for Phase Info -->
+            <div id="phaseOverlay" class="absolute top-4 left-4 right-4 z-10 pointer-events-none flex justify-center">
+                <div class="bg-slate-900/90 backdrop-blur border border-slate-600 px-6 py-2 rounded-full transition-all duration-500 opacity-0 transform translate-y-[-10px]" id="infoBox">
+                    <span id="phaseStat" class="text-xs font-bold text-yellow-400 uppercase tracking-widest">NOISE</span>
+                </div>
+            </div>
+            
+            <canvas id="simCanvas" class="w-full h-full block"></canvas>
+            
+            <!-- Central Stimulus Icon -->
+            <div class="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 pointer-events-none opacity-50">
+                 <div class="flex flex-col items-center">
+                    <i data-lucide="apple" size="48" class="text-red-500/80"></i>
+                    <span class="text-[10px] text-slate-500 font-mono mt-1">THE STIMULUS</span>
+                 </div>
             </div>
         </div>
 
-        <canvas id="simCanvas" class="w-full h-full block"></canvas>
+        <!-- Bottom: Graph & Logs -->
+        <div class="h-1/3 bg-slate-900 border-t border-slate-700 flex flex-col md:flex-row">
+            
+            <!-- Graph Area -->
+            <div class="flex-1 p-4 border-b md:border-b-0 md:border-r border-slate-800 relative">
+                <h4 class="absolute top-2 left-4 text-[10px] font-bold text-slate-500 uppercase">Entropy / Loss Landscape</h4>
+                <canvas id="graphCanvas" class="w-full h-full"></canvas>
+            </div>
 
-        <!-- Log Output -->
-        <div class="h-40 bg-slate-900 border-t border-slate-700 p-4 font-mono text-xs overflow-y-auto" id="logContainer">
-            <div class="text-slate-500 mb-2">System Ready.</div>
+            <!-- Log Area -->
+            <div class="w-full md:w-1/3 p-4 bg-slate-950 overflow-y-auto font-mono text-[10px] leading-relaxed" id="logContainer">
+                <div class="text-slate-500 italic">System Ready. Awaiting Initialization...</div>
+            </div>
         </div>
     </div>
 
@@ -180,32 +152,33 @@
         lucide.createIcons();
 
         // --- Config ---
-        const canvas = document.getElementById('simCanvas');
-        const ctx = canvas.getContext('2d');
+        const simCanvas = document.getElementById('simCanvas');
+        const ctx = simCanvas.getContext('2d');
+        const graphCanvas = document.getElementById('graphCanvas');
+        const gCtx = graphCanvas.getContext('2d');
         const logContainer = document.getElementById('logContainer');
         
         let agents = [];
         let connections = [];
+        let coherenceHistory = []; // For the graph
         let coherence = 0;
         let epoch = 0;
-        let stabilityCounter = 0; // Tracks how long we've been stable (for standardization)
+        let stabilityCounter = 0;
         let isRunning = false;
         let animationId;
         
-        // Lexicon
-        const possibleWords = ["KA", "LO", "MI", "SU", "PA", "TE", "NI", "VO", "DA", "RU"];
+        const possibleWords = ["KA", "LO", "MI", "SU", "PA", "TE", "NI", "VO"];
         const objectConcept = "FOOD"; 
 
-        // State Machine for Phases
         const PHASES = {
-            NOISE: { name: "NOISE / PRE-PIDGIN", color: "#facc15", desc: "Agents use random tokens. No standard exists. High entropy." },
-            PIDGIN: { name: "PIDGIN / NEGOTIATION", color: "#fb923c", desc: "High-frequency interaction. Temporary norms emerge but are unstable." },
-            CREOLE: { name: "CREOLE / EMERGENCE", color: "#4ade80", desc: "Structure stabilizes. Rules are grammaticalized. 100% Alignment." },
-            STANDARD: { name: "STANDARDIZED LANGUAGE", color: "#38bdf8", desc: "The Creole has persisted long enough to become the unchanging standard." }
+            NOISE: { name: "NOISE", color: "#facc15", ling: "Pidgin (Pre-Syntax)", ai: "High Entropy / Random Initialization" },
+            PIDGIN: { name: "NEGOTIATION", color: "#fb923c", ling: "Pidgin (Unstable Lexicon)", ai: "Gradient Descent (Searching)" },
+            CREOLE: { name: "CREOLIZATION", color: "#4ade80", ling: "Creole (Grammaticalization)", ai: "Convergence / Protocol Emergence" },
+            STANDARD: { name: "STANDARD", color: "#38bdf8", ling: "Standardized Language", ai: "Overfitting / Fixed Weights" }
         };
         let currentPhase = PHASES.NOISE;
 
-        // --- UI Handling for Sliders ---
+        // --- UI Sliders ---
         const s_agentCount = document.getElementById('agentCount');
         const s_pressure = document.getElementById('pressure');
         const s_learning = document.getElementById('learningRate');
@@ -218,9 +191,7 @@
             document.getElementById('speedVal').innerText = s_speed.value + "x";
         }
 
-        [s_agentCount, s_pressure, s_learning, s_speed].forEach(el => {
-            el.addEventListener('input', updateSliderDisplays);
-        });
+        [s_agentCount, s_pressure, s_learning, s_speed].forEach(el => el.addEventListener('input', updateSliderDisplays));
 
         // --- Classes ---
 
@@ -231,7 +202,7 @@
                 this.y = y;
                 this.vx = (Math.random() - 0.5) * 0.5;
                 this.vy = (Math.random() - 0.5) * 0.5;
-                this.radius = 24; 
+                this.radius = 20; 
                 this.vocab = {
                     [objectConcept]: { word: getRandomWord(), confidence: 0.1 }
                 };
@@ -240,31 +211,23 @@
             update() {
                 this.x += this.vx;
                 this.y += this.vy;
-
-                // Bounds checking
-                if (this.x < this.radius || this.x > canvas.width - this.radius) this.vx *= -1;
-                if (this.y < this.radius || this.y > canvas.height - this.radius) this.vy *= -1;
+                if (this.x < this.radius || this.x > simCanvas.width - this.radius) this.vx *= -1;
+                if (this.y < this.radius || this.y > simCanvas.height - this.radius) this.vy *= -1;
             }
 
             draw() {
                 ctx.beginPath();
                 ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
-                
-                // Color intensity based on confidence
                 const conf = this.vocab[objectConcept].confidence;
-                const baseColor = isRunning ? `rgba(56, 189, 248, ${0.2 + (conf * 0.8)})` : '#334155';
-                
+                const baseColor = isRunning ? `rgba(56, 189, 248, ${0.2 + (conf * 0.8)})` : '#1e293b';
                 ctx.fillStyle = baseColor;
                 ctx.fill();
-                
-                // Stroke color based on Phase
-                ctx.strokeStyle = (coherence > 95) ? currentPhase.color : (isRunning ? '#7dd3fc' : '#475569');
+                ctx.strokeStyle = (coherence > 95) ? currentPhase.color : (isRunning ? '#38bdf8' : '#475569');
                 ctx.lineWidth = 2;
                 ctx.stroke();
 
-                // Text
                 ctx.fillStyle = '#fff';
-                ctx.font = 'bold 11px JetBrains Mono';
+                ctx.font = 'bold 10px JetBrains Mono';
                 ctx.textAlign = 'center';
                 ctx.textBaseline = 'middle';
                 ctx.fillText(this.vocab[objectConcept].word, this.x, this.y);
@@ -278,44 +241,42 @@
                 this.life = 1.0;
                 this.success = success;
             }
-
-            update() {
-                // Slower fade out for better visibility
-                this.life -= 0.02; 
-            }
-
+            update() { this.life -= 0.02; }
             draw() {
                 if (this.life <= 0) return;
                 ctx.beginPath();
                 ctx.moveTo(this.a.x, this.a.y);
                 ctx.lineTo(this.b.x, this.b.y);
-                ctx.strokeStyle = this.success 
-                    ? `rgba(74, 222, 128, ${this.life})` // Green
-                    : `rgba(248, 113, 113, ${this.life})`; // Red
-                ctx.lineWidth = 3 * this.life;
+                ctx.strokeStyle = this.success ? `rgba(74, 222, 128, ${this.life})` : `rgba(248, 113, 113, ${this.life})`;
+                ctx.lineWidth = 2;
                 ctx.stroke();
             }
         }
 
         // --- Helpers ---
 
-        function getRandomWord() {
-            return possibleWords[Math.floor(Math.random() * possibleWords.length)];
-        }
+        function getRandomWord() { return possibleWords[Math.floor(Math.random() * possibleWords.length)]; }
 
         function resize() {
-            canvas.width = canvas.parentElement.offsetWidth;
-            canvas.height = canvas.parentElement.offsetHeight;
+            simCanvas.width = simCanvas.parentElement.offsetWidth;
+            simCanvas.height = simCanvas.parentElement.offsetHeight;
+            graphCanvas.width = graphCanvas.parentElement.offsetWidth;
+            graphCanvas.height = graphCanvas.parentElement.offsetHeight;
         }
 
         function log(msg, type = 'neutral') {
             const div = document.createElement('div');
-            div.innerHTML = `<span class="opacity-50">></span> ${msg}`;
+            div.className = "mb-1 border-b border-slate-900 pb-1";
             
-            if (type === 'success') div.classList.add('text-emerald-400');
-            else if (type === 'fail') div.classList.add('text-red-400');
-            else if (type === 'phase') div.classList.add('text-yellow-400', 'font-bold', 'border-t', 'border-b', 'border-slate-800', 'py-1', 'my-1');
-            else div.classList.add('text-slate-400');
+            if (type === 'success') {
+                div.innerHTML = `<span class="text-emerald-500 font-bold">✓</span> <span class="text-slate-300">${msg}</span>`;
+            } else if (type === 'fail') {
+                div.innerHTML = `<span class="text-red-500 font-bold">×</span> <span class="text-slate-500">${msg}</span>`;
+            } else if (type === 'phase') {
+                div.innerHTML = `<span class="text-yellow-400 font-bold uppercase tracking-widest text-[9px] block mt-2 mb-1">--- ${msg} ---</span>`;
+            } else {
+                div.innerHTML = `<span class="text-slate-600">></span> ${msg}`;
+            }
 
             logContainer.appendChild(div);
             logContainer.scrollTop = logContainer.scrollHeight;
@@ -324,30 +285,29 @@
         function init() {
             agents = [];
             connections = [];
+            coherenceHistory = new Array(100).fill(0); // Initialize graph buffer
             coherence = 0;
             epoch = 0;
             stabilityCounter = 0;
             currentPhase = PHASES.NOISE;
             
             const count = parseInt(s_agentCount.value);
-            
             for (let i = 0; i < count; i++) {
                 const angle = (i / count) * Math.PI * 2;
-                const radius = Math.min(canvas.width, canvas.height) * 0.25;
-                const x = canvas.width / 2 + Math.cos(angle) * radius;
-                const y = canvas.height / 2 + Math.sin(angle) * radius;
+                const radius = Math.min(simCanvas.width, simCanvas.height) * 0.3;
+                const x = simCanvas.width / 2 + Math.cos(angle) * radius;
+                const y = simCanvas.height / 2 + Math.sin(angle) * radius;
                 agents.push(new Agent(i, x, y));
             }
             
-            draw(); // Draw initial state
-            updateStats();
-            logContainer.innerHTML = '<div class="text-slate-500 mb-2">System Ready.</div>';
+            drawSim();
+            drawGraph();
+            logContainer.innerHTML = '<div class="text-slate-500 italic mb-2">Sim initialized. Populations randomized. Loss high.</div>';
         }
 
-        // --- Simulation Logic ---
+        // --- Core Logic ---
 
         function interact() {
-            // Pick two random agents
             const idx1 = Math.floor(Math.random() * agents.length);
             let idx2 = Math.floor(Math.random() * agents.length);
             while(idx1 === idx2) idx2 = Math.floor(Math.random() * agents.length);
@@ -360,20 +320,22 @@
             
             let success = false;
             const learningRate = parseInt(s_learning.value) / 100; 
-            const pressure = parseInt(s_pressure.value) / 100; // 0.01 to 1.0
+            const pressure = parseInt(s_pressure.value) / 100;
 
             if (word1 === word2) {
-                // Success: Reinforce
-                // Pressure helps reinforce FASTER
+                // Success
                 const boost = learningRate * (1 + pressure);
                 a1.vocab[objectConcept].confidence = Math.min(1, a1.vocab[objectConcept].confidence + boost);
                 a2.vocab[objectConcept].confidence = Math.min(1, a2.vocab[objectConcept].confidence + boost);
                 success = true;
+                
+                if (Math.random() > 0.95 && isRunning) {
+                     log(`Agents aligned on "${word1}". (Weights Updated)`, 'success');
+                }
             } else {
-                // Failure: Adapt
-                // High pressure = high penalty (loss function)
+                // Failure
                 const penalty = learningRate * (0.5 + pressure);
-
+                // Simple probabilistic adoption
                 if (a1.vocab[objectConcept].confidence > a2.vocab[objectConcept].confidence) {
                     a2.vocab[objectConcept].word = word1;
                     a2.vocab[objectConcept].confidence = 0.2; 
@@ -384,10 +346,13 @@
                     a1.vocab[objectConcept].confidence = Math.max(0.05, a1.vocab[objectConcept].confidence - penalty);
                     a2.vocab[objectConcept].confidence = Math.max(0.05, a2.vocab[objectConcept].confidence - penalty);
                 }
+                
+                if (Math.random() > 0.98 && isRunning) {
+                     log(`Mismatch: "${word1}" vs "${word2}". (Loss Detected)`, 'fail');
+                }
             }
 
             connections.push(new Connection(a1, a2, success));
-            return success;
         }
 
         function calculateCoherence() {
@@ -396,7 +361,6 @@
                 const w = a.vocab[objectConcept].word;
                 wordCounts[w] = (wordCounts[w] || 0) + 1;
             });
-            
             const maxCount = Math.max(...Object.values(wordCounts));
             return Math.floor((maxCount / agents.length) * 100);
         }
@@ -404,7 +368,6 @@
         function updatePhase() {
             const oldPhase = currentPhase;
             
-            // Phase Logic
             if (coherence < 30) {
                 currentPhase = PHASES.NOISE;
                 stabilityCounter = 0;
@@ -412,43 +375,75 @@
                 currentPhase = PHASES.PIDGIN;
                 stabilityCounter = 0;
             } else {
-                // We are in Creole territory
                 stabilityCounter++;
-                if (stabilityCounter > 200) { // If stable for 200 ticks
-                    currentPhase = PHASES.STANDARD;
-                } else {
-                    currentPhase = PHASES.CREOLE;
-                }
+                if (stabilityCounter > 300) currentPhase = PHASES.STANDARD;
+                else currentPhase = PHASES.CREOLE;
             }
 
-            // Detect Shift
+            // Update Text Explanations
+            document.getElementById('lingState').innerText = currentPhase.ling;
+            document.getElementById('aiState').innerText = currentPhase.ai;
+
             if (oldPhase !== currentPhase) {
-                log(`Phase Shift: ${currentPhase.name}`, 'phase');
+                log(`PHASE SHIFT: ${currentPhase.name}`, 'phase');
+                
+                // Show Overlay
                 const overlay = document.getElementById('infoBox');
+                const txt = document.getElementById('phaseStat');
+                txt.innerText = currentPhase.name;
+                txt.style.color = currentPhase.color;
+                
                 overlay.style.opacity = 1;
                 overlay.style.transform = 'translateY(0)';
                 
-                document.getElementById('infoTitle').innerText = currentPhase.name;
-                document.getElementById('infoDesc').innerText = currentPhase.desc;
-                document.getElementById('phaseStat').innerText = currentPhase.name.split('/')[0].trim();
-                document.getElementById('phaseStat').style.color = currentPhase.color;
-                document.getElementById('phaseIndicator').style.backgroundColor = currentPhase.color;
-
                 setTimeout(() => {
                      overlay.style.opacity = 0;
                      overlay.style.transform = 'translateY(-10px)';
-                }, 4000);
+                }, 3000);
             }
+        }
+
+        function drawGraph() {
+            // Draw Background
+            gCtx.fillStyle = '#0f172a';
+            gCtx.fillRect(0, 0, graphCanvas.width, graphCanvas.height);
+            
+            // Draw Grid lines
+            gCtx.strokeStyle = '#1e293b';
+            gCtx.lineWidth = 1;
+            gCtx.beginPath();
+            gCtx.moveTo(0, graphCanvas.height * 0.5);
+            gCtx.lineTo(graphCanvas.width, graphCanvas.height * 0.5);
+            gCtx.stroke();
+
+            // Draw Line
+            gCtx.beginPath();
+            gCtx.strokeStyle = '#38bdf8';
+            gCtx.lineWidth = 2;
+
+            const step = graphCanvas.width / coherenceHistory.length;
+            
+            coherenceHistory.forEach((val, i) => {
+                // Invert: High coherence = Low Entropy (Graph goes UP for Coherence)
+                const y = graphCanvas.height - ((val / 100) * graphCanvas.height);
+                if (i === 0) gCtx.moveTo(0, y);
+                else gCtx.lineTo(i * step, y);
+            });
+            gCtx.stroke();
+            
+            // Draw Gradient under line
+            gCtx.lineTo(graphCanvas.width, graphCanvas.height);
+            gCtx.lineTo(0, graphCanvas.height);
+            gCtx.fillStyle = 'rgba(56, 189, 248, 0.1)';
+            gCtx.fill();
         }
 
         function loop() {
             if (!isRunning) return;
 
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            // Clear Sim
+            ctx.clearRect(0, 0, simCanvas.width, simCanvas.height);
 
-            // SPEED CONTROL:
-            // The speed slider now controls how many interactions happen per frame.
-            // Pressure no longer controls speed, only the math inside interact().
             const loopsPerFrame = parseInt(s_speed.value);
 
             for(let i=0; i<loopsPerFrame; i++) {
@@ -457,40 +452,38 @@
             }
 
             coherence = calculateCoherence();
-            updatePhase();
-            updateStats();
+            
+            // Update Graph Data
+            if (epoch % 5 === 0) { // Don't update graph every single frame
+                coherenceHistory.push(coherence);
+                if (coherenceHistory.length > 200) coherenceHistory.shift();
+            }
 
-            // Draw
+            updatePhase();
+
+            // Draw Sim
             agents.forEach(a => { a.update(); a.draw(); });
             connections = connections.filter(c => c.life > 0);
             connections.forEach(c => { c.update(); c.draw(); });
 
+            // Draw Graph
+            drawGraph();
+
             animationId = requestAnimationFrame(loop);
         }
-
-        function updateStats() {
-            document.getElementById('coherenceStat').innerText = coherence + "%";
-            document.getElementById('epochStat').innerText = epoch;
-            
-            if(isRunning) {
-                 document.getElementById('phaseStat').style.color = currentPhase.color;
-                 document.getElementById('phaseIndicator').style.backgroundColor = currentPhase.color;
-            }
-        }
         
-        function draw() {
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
+        function drawSim() {
+            ctx.clearRect(0, 0, simCanvas.width, simCanvas.height);
             agents.forEach(a => a.draw());
         }
 
-        // --- Event Listeners ---
-
+        // --- Listeners ---
         window.addEventListener('resize', () => { resize(); if(!isRunning) init(); });
-
+        
         document.getElementById('startBtn').addEventListener('click', () => {
             if (isRunning) return;
             isRunning = true;
-            log("Simulation started.", "phase");
+            log("EXPERIMENT STARTED", "phase");
             loop();
         });
 
@@ -498,17 +491,13 @@
             isRunning = false;
             cancelAnimationFrame(animationId);
             init();
-            log("Simulation reset.");
-            document.getElementById('infoBox').style.opacity = 0;
-            document.getElementById('epochStat').innerText = "0";
-            document.getElementById('coherenceStat').innerText = "0%";
+            document.getElementById('lingState').innerText = PHASES.NOISE.ling;
+            document.getElementById('aiState').innerText = PHASES.NOISE.ai;
         });
 
-        s_agentCount.addEventListener('change', () => {
-            if(!isRunning) init();
-        });
+        s_agentCount.addEventListener('change', () => { if(!isRunning) init(); });
 
-        // Initialize
+        // Start
         updateSliderDisplays();
         resize();
         init();
