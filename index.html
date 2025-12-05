@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Algorithmic Creolization: Isomorphism Simulator</title>
+    <title>Algorithmic Creolization: Isomorphism Simulator v4.1</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
     <style>
@@ -91,6 +91,14 @@
                 </button>
             </div>
 
+            <!-- Interaction Counter (NEW) -->
+            <div class="bg-slate-800 p-3 rounded border border-slate-700">
+                <div class="flex justify-between items-center">
+                    <span class="text-[10px] font-bold text-slate-400 uppercase">Total Interactions</span>
+                    <span id="interactionCounter" class="text-sm font-mono text-white font-bold">0</span>
+                </div>
+            </div>
+
             <!-- Dual Definition Panel -->
             <div class="bg-slate-800 p-3 rounded border border-slate-700">
                 <h3 class="text-[10px] font-bold text-slate-500 uppercase mb-2">Current State Interpretation</h3>
@@ -157,10 +165,11 @@
         const graphCanvas = document.getElementById('graphCanvas');
         const gCtx = graphCanvas.getContext('2d');
         const logContainer = document.getElementById('logContainer');
+        const interactionDisplay = document.getElementById('interactionCounter');
         
         let agents = [];
         let connections = [];
-        let coherenceHistory = []; // For the graph
+        let coherenceHistory = []; 
         let coherence = 0;
         let epoch = 0;
         let stabilityCounter = 0;
@@ -285,7 +294,7 @@
         function init() {
             agents = [];
             connections = [];
-            coherenceHistory = new Array(100).fill(0); // Initialize graph buffer
+            coherenceHistory = new Array(100).fill(0); 
             coherence = 0;
             epoch = 0;
             stabilityCounter = 0;
@@ -300,6 +309,7 @@
                 agents.push(new Agent(i, x, y));
             }
             
+            interactionDisplay.innerText = "0"; // Reset counter
             drawSim();
             drawGraph();
             logContainer.innerHTML = '<div class="text-slate-500 italic mb-2">Sim initialized. Populations randomized. Loss high.</div>';
@@ -335,7 +345,6 @@
             } else {
                 // Failure
                 const penalty = learningRate * (0.5 + pressure);
-                // Simple probabilistic adoption
                 if (a1.vocab[objectConcept].confidence > a2.vocab[objectConcept].confidence) {
                     a2.vocab[objectConcept].word = word1;
                     a2.vocab[objectConcept].confidence = 0.2; 
@@ -451,10 +460,13 @@
                 interact();
             }
 
+            // Update Counter
+            interactionDisplay.innerText = epoch.toLocaleString();
+
             coherence = calculateCoherence();
             
             // Update Graph Data
-            if (epoch % 5 === 0) { // Don't update graph every single frame
+            if (epoch % 5 === 0) { 
                 coherenceHistory.push(coherence);
                 if (coherenceHistory.length > 200) coherenceHistory.shift();
             }
