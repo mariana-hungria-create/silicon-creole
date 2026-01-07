@@ -3,517 +3,1086 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Algorithmic Creolization: Isomorphism Simulator v4.1</title>
+    <title>Algorithmic Creolization: Scientific Workbench</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&family=JetBrains+Mono:wght@400;700&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;900&family=JetBrains+Mono:wght@400;700&display=swap');
         
-        body { font-family: 'Inter', sans-serif; background-color: #0f172a; color: #e2e8f0; }
+        body { 
+            font-family: 'Inter', sans-serif; 
+            background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+            color: #e2e8f0; 
+        }
         .mono { font-family: 'JetBrains Mono', monospace; }
-        canvas { border-radius: 8px; }
+        canvas { border-radius: 12px; box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.3); }
 
-        /* Custom Range Slider Styling */
         input[type=range] { -webkit-appearance: none; background: transparent; }
         input[type=range]::-webkit-slider-thumb {
-            -webkit-appearance: none; height: 16px; width: 16px; border-radius: 50%;
-            background: #38bdf8; cursor: pointer; margin-top: -6px; 
-            box-shadow: 0 0 5px rgba(56, 189, 248, 0.5);
+            -webkit-appearance: none; height: 18px; width: 18px; border-radius: 50%;
+            background: linear-gradient(135deg, #38bdf8 0%, #0ea5e9 100%);
+            cursor: pointer; margin-top: -7px; 
+            box-shadow: 0 0 8px rgba(56, 189, 248, 0.6), 0 4px 6px -1px rgba(0, 0, 0, 0.3);
+            transition: all 0.2s;
+        }
+        input[type=range]::-webkit-slider-thumb:hover {
+            transform: scale(1.1);
+            box-shadow: 0 0 12px rgba(56, 189, 248, 0.8);
         }
         input[type=range]::-webkit-slider-runnable-track {
-            width: 100%; height: 4px; cursor: pointer; background: #334155; border-radius: 2px;
+            width: 100%; height: 6px; cursor: pointer; 
+            background: linear-gradient(90deg, #334155 0%, #475569 100%);
+            border-radius: 3px;
         }
-        #speedSlider::-webkit-slider-thumb { background: #facc15; }
+        
+        /* Toggle Switch */
+        .toggle-checkbox:checked { right: 0; border-color: #10b981; }
+        .toggle-checkbox:checked + .toggle-label { background-color: #10b981; }
+        
+        select {
+            background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%2394a3b8' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e");
+            background-position: right 0.5rem center;
+            background-repeat: no-repeat;
+            background-size: 1.5em 1.5em;
+            padding-right: 2.5rem;
+        }
+
+        .tooltip { position: relative; display: inline-block; cursor: help; border-bottom: 1px dotted #94a3b8; }
+        button.tooltip { border-bottom: none; } 
+        
+        .tooltip .tooltiptext {
+            visibility: hidden; width: 220px; background-color: #0f172a; color: #e2e8f0;
+            text-align: left; border-radius: 8px; padding: 10px; position: absolute; z-index: 100;
+            bottom: 135%; left: 0; margin-left: 0; opacity: 0; transition: opacity 0.2s;
+            font-size: 10px; border: 1px solid #475569; 
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.8); pointer-events: none;
+        }
+        .tooltip:hover .tooltiptext { visibility: visible; opacity: 1; }
+        .tooltiptext strong { color: #38bdf8; display: block; margin-bottom: 3px; font-size: 11px; }
+        
+        .glass-panel {
+            background: rgba(15, 23, 42, 0.7); backdrop-filter: blur(10px);
+            border: 1px solid rgba(148, 163, 184, 0.1);
+        }
+        
+        @keyframes pulse-glow {
+            0%, 100% { box-shadow: 0 0 5px rgba(239, 68, 68, 0.5); }
+            50% { box-shadow: 0 0 15px rgba(239, 68, 68, 0.8); }
+        }
+        .recording-indicator { animation: pulse-glow 2s infinite; }
+
+        /* Modal Styles */
+        #scoreCardModal { backdrop-filter: blur(5px); }
     </style>
 </head>
-<body class="h-screen flex flex-col md:flex-row overflow-hidden">
+<body class="h-screen flex flex-col md:flex-row overflow-hidden relative">
 
-    <!-- Sidebar / Controls -->
-    <div class="w-full md:w-1/3 lg:w-1/4 bg-slate-900 border-r border-slate-700 flex flex-col p-6 overflow-y-auto z-10 shadow-xl">
-        <div class="mb-6 border-b border-slate-800 pb-4">
-            <h1 class="text-lg font-bold text-white mb-1 leading-tight">
-                Algorithmic<br><span class="text-sky-400">Creolization</span>
-            </h1>
-            <p class="text-[10px] text-slate-400 mt-2">Correlating Biological Syntax & AI Protocols</p>
-        </div>
-
-        <div class="space-y-6">
-            <div class="bg-slate-800/50 p-4 rounded-lg border border-slate-700">
-                <h2 class="text-xs font-bold text-sky-400 mb-4 uppercase tracking-wider flex items-center gap-2">
-                    <i data-lucide="sliders"></i> Variables
+    <!-- Score Card Modal -->
+    <div id="scoreCardModal" class="absolute inset-0 z-50 bg-slate-900/80 hidden flex items-center justify-center p-4">
+        <div class="bg-slate-800 border border-slate-600 rounded-2xl shadow-2xl max-w-lg w-full overflow-hidden">
+            <div class="p-6 border-b border-slate-700 bg-gradient-to-r from-slate-800 to-slate-900">
+                <h2 class="text-xl font-black text-white uppercase tracking-wider flex items-center gap-2">
+                    <i data-lucide="clipboard-list" class="text-emerald-400"></i> Experiment Report
                 </h2>
-                
-                <!-- Agent Count -->
-                <div class="mb-4">
-                    <div class="flex justify-between items-center mb-1">
-                        <label class="text-xs font-semibold text-slate-200">Population (N)</label>
-                        <span id="agentCountVal" class="text-xs font-mono bg-slate-700 px-2 py-0.5 rounded text-white">8</span>
+                <p class="text-xs text-slate-400 mt-1 mono">Session ID: <span id="reportId"></span></p>
+            </div>
+            <div class="p-6 space-y-6">
+                <!-- Stimulus Section -->
+                <div>
+                    <h3 class="text-xs font-bold text-sky-400 uppercase tracking-widest mb-3 border-b border-sky-500/30 pb-1">1. Stimulus (Initial Conditions)</h3>
+                    <div class="grid grid-cols-2 gap-4 text-xs font-mono text-slate-300">
+                        <div>
+                            <span class="block text-slate-500 text-[10px]">Scenario</span>
+                            <span id="repScenario" class="text-white font-bold"></span>
+                        </div>
+                        <div>
+                            <span class="block text-slate-500 text-[10px]">RNG Seed</span>
+                            <span id="repSeed" class="text-pink-400"></span>
+                        </div>
+                        <div>
+                            <span class="block text-slate-500 text-[10px]">Pressure / Resistance</span>
+                            <span id="repParams"></span>
+                        </div>
+                        <div>
+                            <span class="block text-slate-500 text-[10px]">Initial Dominant</span>
+                            <span id="repInitWord"></span>
+                        </div>
                     </div>
-                    <input type="range" id="agentCount" min="3" max="20" value="8" class="w-full">
                 </div>
 
-                <!-- Pressure -->
-                <div class="mb-4">
-                    <div class="flex justify-between items-center mb-1">
-                        <label class="text-xs font-semibold text-slate-200">Optimization Pressure</label>
-                        <span id="pressureVal" class="text-xs font-mono bg-slate-700 px-2 py-0.5 rounded text-white">50</span>
+                <!-- Dynamics Section -->
+                <div>
+                    <h3 class="text-xs font-bold text-yellow-400 uppercase tracking-widest mb-3 border-b border-yellow-500/30 pb-1">2. Process Dynamics</h3>
+                    <div class="grid grid-cols-2 gap-4 text-xs font-mono text-slate-300">
+                        <div>
+                            <span class="block text-slate-500 text-[10px]">Peak Velocity (Grokking)</span>
+                            <span id="repVelocity"></span>
+                        </div>
+                        <div>
+                            <span class="block text-slate-500 text-[10px]">Max Alignment Gap</span>
+                            <span id="repMaxGap"></span>
+                        </div>
+                        <div>
+                            <span class="block text-slate-500 text-[10px]">Convergence Epoch</span>
+                            <span id="repConvEpoch"></span>
+                        </div>
+                        <div>
+                            <span class="block text-slate-500 text-[10px]">Safety Status</span>
+                            <span id="repSafety"></span>
+                        </div>
                     </div>
-                    <p class="text-[9px] text-slate-400 mb-2">Linguistic Necessity / Loss Function</p>
-                    <input type="range" id="pressure" min="1" max="100" value="50" class="w-full">
                 </div>
 
-                <!-- Learning Rate -->
-                <div class="mb-4">
-                    <div class="flex justify-between items-center mb-1">
-                        <label class="text-xs font-semibold text-slate-200">Plasticity (LR)</label>
-                        <span id="learningRateVal" class="text-xs font-mono bg-slate-700 px-2 py-0.5 rounded text-white">5</span>
+                <!-- Outcome Section -->
+                <div>
+                    <h3 class="text-xs font-bold text-emerald-400 uppercase tracking-widest mb-3 border-b border-emerald-500/30 pb-1">3. Final Outcome</h3>
+                    <div class="flex items-center justify-between bg-slate-900/50 p-3 rounded-lg border border-slate-700">
+                        <div class="text-center">
+                            <span class="block text-[10px] text-slate-500 uppercase">Winner Word</span>
+                            <span id="repWinner" class="text-lg font-bold text-white"></span>
+                        </div>
+                        <div class="text-center">
+                            <span class="block text-[10px] text-slate-500 uppercase">Lexical %</span>
+                            <span id="repFinalLex" class="text-lg font-bold text-sky-400"></span>
+                        </div>
+                        <div class="text-center">
+                            <span class="block text-[10px] text-slate-500 uppercase">Grammar %</span>
+                            <span id="repFinalGram" class="text-lg font-bold text-yellow-400"></span>
+                        </div>
                     </div>
-                    <p class="text-[9px] text-slate-400 mb-2">Child Acquisition / Weight Update</p>
-                    <input type="range" id="learningRate" min="1" max="20" value="5" class="w-full">
-                </div>
-
-                <!-- Speed -->
-                <div class="mb-2 pt-4 border-t border-slate-700">
-                    <div class="flex justify-between items-center mb-1">
-                        <label class="text-xs font-bold text-yellow-400">Simulation Speed</label>
-                        <span id="speedVal" class="text-xs font-mono bg-slate-700 px-2 py-0.5 rounded text-white">1x</span>
-                    </div>
-                    <input type="range" id="speedSlider" min="1" max="50" value="5" class="w-full">
                 </div>
             </div>
-
-            <div class="flex gap-2">
-                <button id="startBtn" class="flex-1 bg-sky-600 hover:bg-sky-500 text-white py-2 px-4 rounded font-semibold text-xs uppercase tracking-wide transition shadow-lg shadow-sky-900/20">
-                    Run Experiment
+            <div class="p-4 bg-slate-900 border-t border-slate-700 flex justify-end">
+                <button id="closeReportBtn" class="bg-slate-700 hover:bg-slate-600 text-white px-6 py-2 rounded-lg text-xs font-bold uppercase tracking-wide transition">
+                    Close & Continue
                 </button>
-                <button id="resetBtn" class="flex-1 bg-slate-700 hover:bg-slate-600 text-white py-2 px-4 rounded font-semibold text-xs uppercase tracking-wide transition">
-                    Reset
-                </button>
-            </div>
-
-            <!-- Interaction Counter (NEW) -->
-            <div class="bg-slate-800 p-3 rounded border border-slate-700">
-                <div class="flex justify-between items-center">
-                    <span class="text-[10px] font-bold text-slate-400 uppercase">Total Interactions</span>
-                    <span id="interactionCounter" class="text-sm font-mono text-white font-bold">0</span>
-                </div>
-            </div>
-
-            <!-- Dual Definition Panel -->
-            <div class="bg-slate-800 p-3 rounded border border-slate-700">
-                <h3 class="text-[10px] font-bold text-slate-500 uppercase mb-2">Current State Interpretation</h3>
-                <div class="grid grid-cols-1 gap-2">
-                    <div class="text-[10px]">
-                        <span class="text-sky-400 font-bold">Linguistics:</span>
-                        <span id="lingState" class="text-slate-300">Pidgin (High Variation)</span>
-                    </div>
-                    <div class="text-[10px]">
-                        <span class="text-emerald-400 font-bold">A.I.:</span>
-                        <span id="aiState" class="text-slate-300">High Loss / Random Weights</span>
-                    </div>
-                </div>
             </div>
         </div>
     </div>
 
-    <!-- Main Visualization Area -->
-    <div class="flex-1 relative bg-slate-950 flex flex-col">
-        
-        <!-- Top: Simulation Canvas -->
-        <div class="relative flex-grow h-2/3 bg-slate-950">
-             <!-- Overlay for Phase Info -->
-            <div id="phaseOverlay" class="absolute top-4 left-4 right-4 z-10 pointer-events-none flex justify-center">
-                <div class="bg-slate-900/90 backdrop-blur border border-slate-600 px-6 py-2 rounded-full transition-all duration-500 opacity-0 transform translate-y-[-10px]" id="infoBox">
-                    <span id="phaseStat" class="text-xs font-bold text-yellow-400 uppercase tracking-widest">NOISE</span>
+    <!-- Sidebar -->
+    <div class="w-full md:w-80 lg:w-96 bg-slate-900 border-r border-slate-700/50 flex flex-col overflow-y-auto z-10 shadow-2xl">
+        <!-- Header -->
+        <div class="p-6 border-b border-slate-800/50 bg-gradient-to-br from-slate-900 to-slate-800">
+            <div class="flex items-start justify-between mb-3">
+                <div>
+                    <h1 class="text-xl font-black text-white mb-1 leading-tight tracking-tight">
+                        Algorithmic<br><span class="bg-gradient-to-r from-emerald-400 to-teal-500 bg-clip-text text-transparent">Creolization</span>
+                    </h1>
+                    <p class="text-[10px] text-slate-400 mt-2 font-medium">Scientific Workbench</p>
+                </div>
+            </div>
+
+            <!-- MODE SWITCHER -->
+            <div class="glass-panel p-3 rounded-xl border border-indigo-500/50 mb-2">
+                <div class="flex items-center justify-between mb-2">
+                    <span class="text-xs font-bold text-white uppercase tracking-wider tooltip">
+                        Simulation Mode
+                        <span class="tooltiptext">
+                            <strong>Demo vs Scientific</strong><br>
+                            Scientific Mode uses O(N) Spatial Hashing and Deterministic Seeding.
+                        </span>
+                    </span>
+                    <div class="relative inline-block w-10 h-4 align-middle select-none transition duration-200 ease-in">
+                        <input type="checkbox" name="toggle" id="modeToggle" class="toggle-checkbox absolute block w-4 h-4 rounded-full bg-white border-4 appearance-none cursor-pointer transition-all duration-300 left-0"/>
+                        <label for="modeToggle" class="toggle-label block overflow-hidden h-4 rounded-full bg-slate-700 cursor-pointer"></label>
+                    </div>
+                </div>
+                <div id="modeDescription" class="text-[9px] text-slate-300 leading-tight">
+                    <strong class="text-sky-400">DEMO MODE:</strong> Global connection. Fast.
                 </div>
             </div>
             
-            <canvas id="simCanvas" class="w-full h-full block"></canvas>
-            
-            <!-- Central Stimulus Icon -->
-            <div class="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 pointer-events-none opacity-50">
-                 <div class="flex flex-col items-center">
-                    <i data-lucide="apple" size="48" class="text-red-500/80"></i>
-                    <span class="text-[10px] text-slate-500 font-mono mt-1">THE STIMULUS</span>
-                 </div>
+            <!-- Quick Stats -->
+            <div class="grid grid-cols-3 gap-2 mt-4">
+                <div class="glass-panel rounded-lg p-2 text-center">
+                    <div class="text-[8px] text-slate-400 uppercase">Epoch</div>
+                    <div id="quickEpoch" class="text-xs font-mono font-bold text-sky-400">0</div>
+                </div>
+                <div class="glass-panel rounded-lg p-2 text-center">
+                    <div class="text-[8px] text-slate-400 uppercase">Velocity</div>
+                    <div id="quickVelocity" class="text-xs font-mono font-bold text-pink-400">0.0</div>
+                </div>
+                <div class="glass-panel rounded-lg p-2 text-center">
+                    <div class="text-[8px] text-slate-400 uppercase">Gap</div>
+                    <div id="quickGap" class="text-xs font-mono font-bold text-red-400">0%</div>
+                </div>
             </div>
         </div>
 
-        <!-- Bottom: Graph & Logs -->
-        <div class="h-1/3 bg-slate-900 border-t border-slate-700 flex flex-col md:flex-row">
-            
-            <!-- Graph Area -->
-            <div class="flex-1 p-4 border-b md:border-b-0 md:border-r border-slate-800 relative">
-                <h4 class="absolute top-2 left-4 text-[10px] font-bold text-slate-500 uppercase">Entropy / Loss Landscape</h4>
-                <canvas id="graphCanvas" class="w-full h-full"></canvas>
+        <div class="p-6 space-y-5">
+            <!-- Core Variables -->
+            <div class="glass-panel p-4 rounded-xl border border-slate-700/50">
+                <h2 class="text-xs font-bold text-sky-400 mb-4 uppercase tracking-wider flex items-center gap-2">
+                    <i data-lucide="sliders" size="14"></i> Parameters
+                </h2>
+                
+                <div id="seedContainer" class="mb-4 hidden">
+                    <label class="block text-xs font-semibold text-pink-400 mb-1">RNG Seed (Deterministic)</label>
+                    <div class="flex gap-2">
+                        <input type="text" id="seedInput" value="12345" class="w-full bg-slate-900 border border-pink-500/50 text-white text-xs p-2 rounded font-mono">
+                        <button id="setSeedBtn" class="bg-pink-600 hover:bg-pink-500 text-white px-3 rounded text-xs font-bold">SET</button>
+                    </div>
+                </div>
+
+                <div class="mb-4">
+                    <label class="block text-xs font-semibold text-slate-200 mb-2">Starting Scenario</label>
+                    <select id="scenarioSelect" class="w-full bg-slate-800/70 border border-slate-600/50 text-slate-200 text-xs rounded-lg p-2.5 outline-none">
+                        <option value="control-drift">🎲 Control: Random Drift (Null)</option>
+                        <option value="founder-dominant">🏛️ Founder Effect</option>
+                        <option value="balanced">⚖️ Balanced Contact</option>
+                        <option value="substrate-revolt">🔄 Substrate Majority</option>
+                    </select>
+                </div>
+
+                <div class="space-y-4">
+                    <div>
+                        <div class="flex justify-between items-center mb-2">
+                            <label class="text-xs font-semibold text-slate-200">Population (N)</label>
+                            <span id="agentCountVal" class="text-xs font-mono bg-slate-700/70 px-2.5 py-1 rounded-md text-white font-bold">30</span>
+                        </div>
+                        <input type="range" id="agentCount" min="30" max="600" value="30" class="w-full">
+                    </div>
+                    <div>
+                        <div class="flex justify-between items-center mb-2">
+                            <label class="text-xs font-semibold text-slate-200">Selection Pressure</label>
+                            <span id="pressureVal" class="text-xs font-mono bg-slate-700/70 px-2.5 py-1 rounded-md text-white font-bold">50</span>
+                        </div>
+                        <input type="range" id="pressure" min="0" max="100" value="50" class="w-full">
+                    </div>
+                </div>
             </div>
 
-            <!-- Log Area -->
-            <div class="w-full md:w-1/3 p-4 bg-slate-950 overflow-y-auto font-mono text-[10px] leading-relaxed" id="logContainer">
-                <div class="text-slate-500 italic">System Ready. Awaiting Initialization...</div>
+            <!-- Advanced Dynamics -->
+            <div class="glass-panel p-4 rounded-xl border border-purple-500/30">
+                <h2 class="text-xs font-bold text-purple-400 mb-4 uppercase tracking-wider flex items-center gap-2">
+                    <i data-lucide="git-merge" size="14"></i> Hybridization
+                </h2>
+                
+                <div class="mb-4">
+                    <div class="flex justify-between items-center mb-2">
+                        <label class="text-xs font-semibold text-slate-200 tooltip">Grammar Resistance
+                            <span class="tooltiptext">Difficulty of changing grammar during "Pidgin" phase.</span>
+                        </label>
+                        <span id="resistanceVal" class="text-xs font-mono bg-purple-700/30 px-2.5 py-1 rounded-md text-purple-300 font-bold">80%</span>
+                    </div>
+                    <input type="range" id="grammarResistance" min="0" max="100" value="80" class="w-full">
+                </div>
+
+                <div class="mb-2">
+                     <div class="flex justify-between items-center mb-2">
+                        <label class="text-xs font-semibold text-slate-200 tooltip">Plasticity Decay
+                            <span class="tooltiptext">Critical Period. High decay = faster crystallization.</span>
+                        </label>
+                        <span id="plasticityDecayVal" class="text-xs font-mono bg-purple-700/30 px-2.5 py-1 rounded-md text-purple-300 font-bold">100</span>
+                    </div>
+                    <input type="range" id="plasticityDecaySlider" min="50" max="200" value="100" class="w-full">
+                </div>
+            </div>
+
+            <!-- Control Buttons -->
+            <div class="space-y-2">
+                <div class="grid grid-cols-2 gap-2">
+                    <button id="startBtn" class="bg-gradient-to-r from-sky-600 to-blue-600 hover:from-sky-500 hover:to-blue-500 text-white py-2.5 px-4 rounded-lg font-bold text-xs uppercase tracking-wide transition flex items-center justify-center gap-2">
+                        <i data-lucide="play" size="14"></i> Run
+                    </button>
+                    <button id="pauseBtn" class="bg-slate-700 hover:bg-slate-600 text-white py-2.5 px-4 rounded-lg font-bold text-xs uppercase tracking-wide transition flex items-center justify-center gap-2">
+                        <i data-lucide="pause" size="14"></i> Pause
+                    </button>
+                </div>
+                <!-- NEW REPORT BUTTON -->
+                <button id="finishBtn" class="w-full bg-emerald-600/20 border border-emerald-500/40 hover:bg-emerald-600/30 text-emerald-300 py-2.5 px-4 rounded-lg font-bold text-xs uppercase tracking-wide transition flex items-center justify-center gap-2">
+                    <i data-lucide="clipboard-check" size="14"></i> Finish & Report
+                </button>
+                <button id="resetBtn" class="w-full bg-slate-800 border border-slate-700 hover:bg-slate-700 text-slate-300 py-2.5 px-4 rounded-lg font-bold text-xs uppercase tracking-wide transition flex items-center justify-center gap-2">
+                    <i data-lucide="rotate-ccw" size="14"></i> Reset
+                </button>
+            </div>
+
+            <!-- Live Metrics -->
+            <div class="glass-panel p-4 rounded-xl border border-slate-700/50">
+                <h3 class="text-[10px] font-bold text-sky-400 uppercase mb-3 flex items-center gap-1">
+                    <i data-lucide="activity" size="12"></i> Phase Dynamics
+                </h3>
+                <div class="space-y-2 text-[10px]">
+                    <div class="flex justify-between border-b border-slate-700/50 pb-2 mb-2">
+                        <span class="text-slate-400 font-medium">Phase Status:</span>
+                        <span id="phaseStat" class="text-yellow-400 font-bold uppercase tracking-wide">EXPLORATION</span>
+                    </div>
+                    <div class="flex justify-between items-center">
+                        <span class="text-sky-400 font-bold">Lexical (Surface):</span>
+                        <span id="metricLexical" class="text-white font-mono font-bold">0%</span>
+                    </div>
+                    <div class="flex justify-between items-center">
+                        <span class="text-yellow-400 font-bold">Grammar (Deep):</span>
+                        <span id="metricGrammar" class="text-white font-mono font-bold">0%</span>
+                    </div>
+                    <!-- ALIGNMENT GAP -->
+                    <div class="flex justify-between items-center pt-2 border-t border-slate-700/50">
+                        <span class="text-slate-400 tooltip">Alignment Gap:
+                             <span class="tooltiptext">Diff between Surface and Deep. >25% = Deception.</span>
+                        </span>
+                        <span id="metricGap" class="text-red-400 font-mono font-bold">0%</span>
+                    </div>
+                </div>
+            </div>
+            
+             <!-- Data Tools -->
+            <div class="glass-panel p-4 rounded-xl border border-emerald-500/30">
+                <h2 class="text-xs font-bold text-emerald-400 mb-3 uppercase tracking-wider flex items-center gap-2">
+                    <i data-lucide="database" size="14"></i> Data Tools
+                </h2>
+                <div class="space-y-2">
+                    <button id="exportTopologyBtn" class="w-full bg-emerald-600/20 border border-emerald-500/40 hover:bg-emerald-600/30 text-emerald-300 py-2 px-3 rounded-lg text-xs font-bold flex items-center justify-center gap-2 transition">
+                        <i data-lucide="share-2" size="12"></i> Export Graph
+                    </button>
+                    <div class="flex gap-2">
+                        <button id="snapshotBtn" class="flex-1 bg-blue-600/20 border border-blue-500/40 hover:bg-blue-600/30 text-blue-300 py-2 px-3 rounded-lg text-xs font-bold flex items-center justify-center gap-2 transition">
+                            <i data-lucide="camera" size="12"></i> Snap
+                        </button>
+                        <button id="replayBtn" class="flex-1 bg-blue-600/20 border border-blue-500/40 hover:bg-blue-600/30 text-blue-300 py-2 px-3 rounded-lg text-xs font-bold flex items-center justify-center gap-2 transition">
+                            <i data-lucide="play-circle" size="12"></i> Replay
+                        </button>
+                    </div>
+                </div>
+            </div>
+            
+            <button id="suppressBtn" class="w-full bg-gradient-to-r from-orange-600 to-red-600 hover:from-orange-500 hover:to-red-500 text-white py-2.5 px-3 rounded-lg text-xs font-bold flex items-center justify-center gap-2 transition shadow-lg shadow-orange-900/20 mt-2">
+                <i data-lucide="shield-off" size="12"></i> Suppress Dominant
+            </button>
+            <div id="suppressionStatus" class="glass-panel p-3 rounded-xl border border-orange-500/30 hidden mt-2">
+                <div id="suppressionStatusContent" class="text-[9px] text-slate-300"></div>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- Main Visualization Area -->
+    <div class="flex-1 flex flex-col relative bg-gradient-to-br from-slate-950 to-slate-900">
+        <div class="flex-1 relative p-4 flex flex-col h-full">
+            <!-- Sim View -->
+            <div class="relative flex-1">
+                <div id="infoBox" class="absolute top-8 left-1/2 transform -translate-x-1/2 z-20 opacity-0 transition-all duration-500 pointer-events-none">
+                    <div class="glass-panel px-6 py-3 rounded-xl border border-sky-500/50 shadow-2xl">
+                        <span id="infoTitle" class="text-sm font-black text-yellow-400 uppercase tracking-widest">EXPLORATION</span>
+                    </div>
+                </div>
+                <!-- Recording Indicator -->
+                <div id="recordingIndicator" class="absolute top-8 right-8 z-20 hidden">
+                    <div class="glass-panel px-3 py-2 rounded-lg border border-red-500/50 flex items-center gap-2 recording-indicator">
+                        <div class="w-2 h-2 bg-red-500 rounded-full animate-pulse"></div>
+                        <span class="text-xs font-bold text-red-400">REC</span>
+                    </div>
+                </div>
+                <!-- Replay Overlay -->
+                <div id="replayOverlay" class="absolute top-8 left-8 z-20 hidden">
+                    <div class="glass-panel px-3 py-2 rounded-lg border border-blue-500/50 flex items-center gap-2">
+                        <i data-lucide="play-circle" size="16" class="text-blue-400"></i>
+                        <span id="replayStatus" class="text-xs font-bold text-blue-400">REPLAYING</span>
+                    </div>
+                </div>
+
+                <canvas id="simCanvas" class="w-full h-full block"></canvas>
+                
+                <!-- Legend -->
+                <div class="absolute bottom-6 right-6 pointer-events-none glass-panel p-3 rounded-xl border border-slate-700/50 text-[9px] text-slate-300">
+                    <div class="font-bold mb-2 text-slate-400 uppercase tracking-wide text-[10px]">Legend</div>
+                    <div class="space-y-1.5">
+                        <div class="flex items-center gap-2">
+                            <span class="w-4 h-4 rounded-full bg-slate-600"></span>
+                            <span>Word Choice (Surface)</span>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <span class="w-4 h-4 rounded-full border-2 border-sky-400"></span>
+                            <span>Blue Border = SVO</span>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <span class="w-4 h-4 rounded-full border-2 border-yellow-400"></span>
+                            <span>Yellow Border = SOV</span>
+                        </div>
+                        <div class="border-t border-slate-700/50 pt-1.5 mt-1.5">
+                            <div class="flex items-center gap-2"><span class="w-8 h-0.5 bg-emerald-500"></span> <span>Match (Creole)</span></div>
+                            <div class="flex items-center gap-2"><span class="w-8 h-0.5 bg-yellow-400"></span> <span>Pidgin (Words OK, Gram NO)</span></div>
+                            <div class="flex items-center gap-2"><span class="w-8 h-0.5 bg-red-500"></span> <span>Mismatch</span></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Graph & Log Split -->
+            <div class="h-64 bg-slate-950/50 border-t border-slate-700/50 flex flex-col md:flex-row mt-4">
+                <div class="flex-1 p-4 border-b md:border-b-0 md:border-r border-slate-800/50 relative">
+                    <h4 class="absolute top-3 left-4 text-[10px] font-bold text-slate-500 uppercase tracking-wide flex items-center gap-2">
+                        <i data-lucide="trending-up" size="12"></i> Emergence Dynamics
+                    </h4>
+                    <!-- Custom Graph Legend -->
+                    <div class="absolute top-3 right-4 flex gap-3 text-[9px]">
+                        <div class="flex items-center gap-1"><div class="w-2 h-2 bg-sky-400 rounded-full"></div><span class="text-slate-400">Lexical</span></div>
+                        <div class="flex items-center gap-1"><div class="w-2 h-2 bg-yellow-400 rounded-full"></div><span class="text-slate-400">Grammar</span></div>
+                    </div>
+                    <canvas id="graphCanvas" class="w-full h-full"></canvas>
+                </div>
+                <div class="w-full md:w-80 p-4 bg-slate-950/80 overflow-y-auto font-mono text-[10px] leading-relaxed" id="logContainer">
+                    <div class="text-slate-500 italic">System ready. Select mode and press Run.</div>
+                </div>
             </div>
         </div>
     </div>
 
     <script>
-        // --- Icons ---
         lucide.createIcons();
-
-        // --- Config ---
         const simCanvas = document.getElementById('simCanvas');
         const ctx = simCanvas.getContext('2d');
         const graphCanvas = document.getElementById('graphCanvas');
         const gCtx = graphCanvas.getContext('2d');
         const logContainer = document.getElementById('logContainer');
-        const interactionDisplay = document.getElementById('interactionCounter');
-        
+        const startBtn = document.getElementById('startBtn');
+        const pauseBtn = document.getElementById('pauseBtn');
+        const finishBtn = document.getElementById('finishBtn'); // NEW
+        const modeToggle = document.getElementById('modeToggle');
+        const seedInput = document.getElementById('seedInput');
+        const setSeedBtn = document.getElementById('setSeedBtn');
+        const safetyPanelContent = document.getElementById('safetyContent');
+        const scoreCardModal = document.getElementById('scoreCardModal'); // NEW
+        const closeReportBtn = document.getElementById('closeReportBtn'); // NEW
+
+        // --- Core Simulation State ---
         let agents = [];
-        let connections = [];
-        let coherenceHistory = []; 
-        let coherence = 0;
+        let connections = []; 
         let epoch = 0;
-        let stabilityCounter = 0;
         let isRunning = false;
+        let isPaused = false;
         let animationId;
         
+        // --- Metrics & History ---
+        let coherenceHistory = new Array(100).fill(0);
+        let grammarHistory = new Array(100).fill(0);
+        
+        // --- Snapshot State ---
+        let isRecording = false;
+        let snapshots = [];
         const possibleWords = ["KA", "LO", "MI", "SU", "PA", "TE", "NI", "VO"];
-        const objectConcept = "FOOD"; 
+
+        // --- Experiment Metadata (New Score Card Data) ---
+        let experimentStats = {
+            maxVelocity: 0,
+            maxGap: 0,
+            convergenceEpoch: null,
+            initialDominant: { word: "None", count: 0 },
+            startTime: Date.now()
+        };
+
+        // --- Mode & Constants ---
+        let MODE = 'DEMO'; 
+        let currentSeed = 12345;
+        let rngState = 12345;
+        const GRID_CELL_SIZE = 40; 
+        
+        const substrates = [
+            { name: "Romance", word: "TE", color: "#60a5fa", grammar: { wordOrder: "SVO", case: "absent", tense: "present" } },
+            { name: "Portuguese", word: "KA", color: "#34d399", grammar: { wordOrder: "SVO", case: "absent", tense: "present" } },
+            { name: "African", word: "PA", color: "#fbbf24", grammar: { wordOrder: "SOV", case: "absent", tense: "absent" } },
+            { name: "Asian", word: "MI", color: "#f87171", grammar: { wordOrder: "SOV", case: "present", tense: "present" } }
+        ];
+
+        const scenarios = {
+            "control-drift": [0.25, 0.25, 0.25, 0.25], 
+            "founder-dominant": [0.40, 0.30, 0.20, 0.10], 
+            "balanced": [0.25, 0.25, 0.25, 0.25],         
+            "substrate-revolt": [0.10, 0.10, 0.40, 0.40]  
+        };
 
         const PHASES = {
-            NOISE: { name: "NOISE", color: "#facc15", ling: "Pidgin (Pre-Syntax)", ai: "High Entropy / Random Initialization" },
-            PIDGIN: { name: "NEGOTIATION", color: "#fb923c", ling: "Pidgin (Unstable Lexicon)", ai: "Gradient Descent (Searching)" },
-            CREOLE: { name: "CREOLIZATION", color: "#4ade80", ling: "Creole (Grammaticalization)", ai: "Convergence / Protocol Emergence" },
-            STANDARD: { name: "STANDARD", color: "#38bdf8", ling: "Standardized Language", ai: "Overfitting / Fixed Weights" }
+            EXPLORATION: { name: "EXPLORATION", color: "#94a3b8" }, 
+            NEGOTIATION: { name: "NEGOTIATION", color: "#f472b6" }, 
+            CONVERGENCE: { name: "STABLE PROTOCOL", color: "#38bdf8" } 
         };
-        let currentPhase = PHASES.NOISE;
+        let currentPhase = PHASES.EXPLORATION;
 
-        // --- UI Sliders ---
+        // UI References
         const s_agentCount = document.getElementById('agentCount');
         const s_pressure = document.getElementById('pressure');
-        const s_learning = document.getElementById('learningRate');
-        const s_speed = document.getElementById('speedSlider');
+        const s_resistance = document.getElementById('grammarResistance');
+        const s_plasticityDecay = document.getElementById('plasticityDecaySlider');
 
+        // --- Random Number Generator (Mulberry32) ---
+        function seedRandom(a) { rngState = a; }
+        function random() {
+            if (MODE === 'DEMO') return Math.random();
+            var t = rngState += 0x6D2B79F5;
+            t = Math.imul(t ^ t >>> 15, t | 1);
+            t ^= t + Math.imul(t ^ t >>> 7, t | 61);
+            return ((t ^ t >>> 14) >>> 0) / 4294967296;
+        }
+
+        // --- UI Logic ---
         function updateSliderDisplays() {
             document.getElementById('agentCountVal').innerText = s_agentCount.value;
             document.getElementById('pressureVal').innerText = s_pressure.value;
-            document.getElementById('learningRateVal').innerText = s_learning.value;
-            document.getElementById('speedVal').innerText = s_speed.value + "x";
+            document.getElementById('resistanceVal').innerText = s_resistance.value + "%";
+            document.getElementById('plasticityDecayVal').innerText = s_plasticityDecay.value;
         }
 
-        [s_agentCount, s_pressure, s_learning, s_speed].forEach(el => el.addEventListener('input', updateSliderDisplays));
+        modeToggle.addEventListener('change', () => {
+            MODE = modeToggle.checked ? 'SCIENTIFIC' : 'DEMO';
+            const desc = document.getElementById('modeDescription');
+            const seedCont = document.getElementById('seedContainer');
 
-        // --- Classes ---
+            if (MODE === 'SCIENTIFIC') {
+                desc.innerHTML = `<strong class="text-pink-400">SCIENTIFIC MODE:</strong> O(N) Spatial Hashing. Deterministic Seeding.`;
+                seedCont.classList.remove('hidden');
+                s_agentCount.max = 800;
+                s_agentCount.value = 400;
+            } else {
+                desc.innerHTML = `<strong class="text-sky-400">DEMO MODE:</strong> Global connection. O(N^2) effectively.`;
+                seedCont.classList.add('hidden');
+                s_agentCount.max = 200;
+                s_agentCount.value = 30;
+            }
+            updateSliderDisplays();
+            init();
+        });
 
+        setSeedBtn.addEventListener('click', () => {
+            currentSeed = parseInt(seedInput.value) || 12345;
+            init();
+            log(`RNG Seed set to: ${currentSeed}`, 'phase');
+        });
+
+        document.getElementById('scenarioSelect').addEventListener('change', () => init());
+        [s_agentCount, s_pressure, s_resistance, s_plasticityDecay].forEach(el => 
+            el.addEventListener('input', () => { updateSliderDisplays(); if(!isRunning) init(); })
+        );
+
+        // --- Agent Class ---
         class Agent {
-            constructor(id, x, y) {
+            constructor(id, x, y, substrate) {
                 this.id = id;
-                this.x = x;
-                this.y = y;
-                this.vx = (Math.random() - 0.5) * 0.5;
-                this.vy = (Math.random() - 0.5) * 0.5;
-                this.radius = 20; 
-                this.vocab = {
-                    [objectConcept]: { word: getRandomWord(), confidence: 0.1 }
-                };
+                this.x = x; this.y = y;
+                this.vx = (random() - 0.5) * 0.5;
+                this.vy = (random() - 0.5) * 0.5;
+                this.radius = MODE === 'SCIENTIFIC' ? 3 : 10;
+                this.age = 0;
+                
+                this.substrateColor = substrate.color;
+                this.word = substrate.word;
+                this.confidence = 0.5;
+                
+                this.grammar = { ...substrate.grammar }; 
+            }
+
+            calculatePlasticity() {
+                const decayFactor = parseInt(s_plasticityDecay.value);
+                const base = 1.0 - (this.age / (decayFactor * 10)); 
+                return Math.max(0.1, Math.min(1.0, base));
             }
 
             update() {
-                this.x += this.vx;
-                this.y += this.vy;
-                if (this.x < this.radius || this.x > simCanvas.width - this.radius) this.vx *= -1;
-                if (this.y < this.radius || this.y > simCanvas.height - this.radius) this.vy *= -1;
+                this.x += this.vx; this.y += this.vy;
+                if (this.x < 0 || this.x > simCanvas.width) this.vx *= -1;
+                if (this.y < 0 || this.y > simCanvas.height) this.vy *= -1;
             }
 
             draw() {
                 ctx.beginPath();
                 ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
-                const conf = this.vocab[objectConcept].confidence;
-                const baseColor = isRunning ? `rgba(56, 189, 248, ${0.2 + (conf * 0.8)})` : '#1e293b';
-                ctx.fillStyle = baseColor;
+                
+                let fill = '#666';
+                if(this.word === "TE") fill = "#60a5fa";
+                if(this.word === "KA") fill = "#34d399";
+                if(this.word === "PA") fill = "#fbbf24";
+                if(this.word === "MI") fill = "#f87171";
+                
+                const alpha = Math.floor(50 + (this.confidence * 200)).toString(16).padStart(2, '0');
+                ctx.fillStyle = fill + alpha;
                 ctx.fill();
-                ctx.strokeStyle = (coherence > 95) ? currentPhase.color : (isRunning ? '#38bdf8' : '#475569');
-                ctx.lineWidth = 2;
+                
+                ctx.strokeStyle = this.grammar.wordOrder === "SVO" ? '#38bdf8' : '#facc15';
+                ctx.lineWidth = MODE === 'SCIENTIFIC' ? 1 : 2;
                 ctx.stroke();
 
-                ctx.fillStyle = '#fff';
-                ctx.font = 'bold 10px JetBrains Mono';
-                ctx.textAlign = 'center';
-                ctx.textBaseline = 'middle';
-                ctx.fillText(this.vocab[objectConcept].word, this.x, this.y);
+                if (MODE === 'DEMO') {
+                    ctx.fillStyle = '#fff';
+                    ctx.font = 'bold 8px Inter';
+                    ctx.textAlign = 'center';
+                    ctx.textBaseline = 'middle';
+                    ctx.fillText(this.word, this.x, this.y);
+                }
             }
         }
 
-        class Connection {
-            constructor(a, b, success) {
-                this.a = a;
-                this.b = b;
-                this.life = 1.0;
-                this.success = success;
-            }
-            update() { this.life -= 0.02; }
-            draw() {
-                if (this.life <= 0) return;
-                ctx.beginPath();
-                ctx.moveTo(this.a.x, this.a.y);
-                ctx.lineTo(this.b.x, this.b.y);
-                ctx.strokeStyle = this.success ? `rgba(74, 222, 128, ${this.life})` : `rgba(248, 113, 113, ${this.life})`;
-                ctx.lineWidth = 2;
-                ctx.stroke();
-            }
-        }
-
-        // --- Helpers ---
-
-        function getRandomWord() { return possibleWords[Math.floor(Math.random() * possibleWords.length)]; }
-
-        function resize() {
-            simCanvas.width = simCanvas.parentElement.offsetWidth;
-            simCanvas.height = simCanvas.parentElement.offsetHeight;
-            graphCanvas.width = graphCanvas.parentElement.offsetWidth;
-            graphCanvas.height = graphCanvas.parentElement.offsetHeight;
-        }
-
-        function log(msg, type = 'neutral') {
-            const div = document.createElement('div');
-            div.className = "mb-1 border-b border-slate-900 pb-1";
-            
-            if (type === 'success') {
-                div.innerHTML = `<span class="text-emerald-500 font-bold">✓</span> <span class="text-slate-300">${msg}</span>`;
-            } else if (type === 'fail') {
-                div.innerHTML = `<span class="text-red-500 font-bold">×</span> <span class="text-slate-500">${msg}</span>`;
-            } else if (type === 'phase') {
-                div.innerHTML = `<span class="text-yellow-400 font-bold uppercase tracking-widest text-[9px] block mt-2 mb-1">--- ${msg} ---</span>`;
-            } else {
-                div.innerHTML = `<span class="text-slate-600">></span> ${msg}`;
-            }
-
-            logContainer.appendChild(div);
-            logContainer.scrollTop = logContainer.scrollHeight;
-        }
-
+        // --- Simulation Core ---
         function init() {
+            seedRandom(currentSeed);
             agents = [];
             connections = [];
-            coherenceHistory = new Array(100).fill(0); 
-            coherence = 0;
             epoch = 0;
-            stabilityCounter = 0;
-            currentPhase = PHASES.NOISE;
+            coherenceHistory.fill(0);
+            grammarHistory.fill(0);
+            snapshots = [];
+            isRecording = false;
+            document.getElementById('recordingIndicator').classList.add('hidden');
             
+            // Reset Stats
+            experimentStats = {
+                maxVelocity: 0,
+                maxGap: 0,
+                convergenceEpoch: null,
+                initialDominant: { word: "None", count: 0 },
+                startTime: Date.now()
+            };
+
             const count = parseInt(s_agentCount.value);
-            for (let i = 0; i < count; i++) {
-                const angle = (i / count) * Math.PI * 2;
-                const radius = Math.min(simCanvas.width, simCanvas.height) * 0.3;
-                const x = simCanvas.width / 2 + Math.cos(angle) * radius;
-                const y = simCanvas.height / 2 + Math.sin(angle) * radius;
-                agents.push(new Agent(i, x, y));
+            const scenarioKey = document.getElementById('scenarioSelect').value;
+            const dist = scenarios[scenarioKey];
+            
+            let subIdx = 0;
+            let currentCount = 0;
+            let threshold = Math.floor(count * dist[0]);
+
+            const wordCounts = {};
+
+            for(let i=0; i<count; i++) {
+                if (currentCount >= threshold && subIdx < dist.length - 1) {
+                    subIdx++; currentCount = 0;
+                    threshold = Math.floor(count * dist[subIdx]);
+                }
+                currentCount++;
+                const angle = random() * Math.PI * 2;
+                const r = random() * (Math.min(simCanvas.width, simCanvas.height) * 0.4);
+                const x = simCanvas.width/2 + Math.cos(angle) * r;
+                const y = simCanvas.height/2 + Math.sin(angle) * r;
+                
+                const ag = new Agent(i, x, y, substrates[subIdx]);
+                agents.push(ag);
+                
+                // Track Initial Stats
+                wordCounts[ag.word] = (wordCounts[ag.word] || 0) + 1;
             }
             
-            interactionDisplay.innerText = "0"; // Reset counter
-            drawSim();
+            // Calculate Initial Dominant
+            const sortedInit = Object.entries(wordCounts).sort((a,b) => b[1]-a[1]);
+            if(sortedInit.length > 0) {
+                experimentStats.initialDominant = {
+                     word: sortedInit[0][0],
+                     count: sortedInit[0][1]
+                };
+            }
+
+            updateMetrics();
             drawGraph();
-            logContainer.innerHTML = '<div class="text-slate-500 italic mb-2">Sim initialized. Populations randomized. Loss high.</div>';
+            log(`Init: N=${count}, Mode=${MODE}`, 'sys');
         }
 
-        // --- Core Logic ---
+        // --- Spatial Grid ---
+        function buildGrid() {
+            const grid = {};
+            for(let a of agents) {
+                const key = `${Math.floor(a.x/GRID_CELL_SIZE)}_${Math.floor(a.y/GRID_CELL_SIZE)}`;
+                if(!grid[key]) grid[key] = [];
+                grid[key].push(a);
+            }
+            return grid;
+        }
+
+        function getNeighbors(agent, grid) {
+            const neighbors = [];
+            const col = Math.floor(agent.x / GRID_CELL_SIZE);
+            const row = Math.floor(agent.y / GRID_CELL_SIZE);
+            
+            for (let i = -1; i <= 1; i++) {
+                for (let j = -1; j <= 1; j++) {
+                    const key = `${col+i}_${row+j}`;
+                    if (grid[key]) {
+                        for(let other of grid[key]) {
+                            if (other !== agent) neighbors.push(other);
+                        }
+                    }
+                }
+            }
+            return neighbors;
+        }
 
         function interact() {
-            const idx1 = Math.floor(Math.random() * agents.length);
-            let idx2 = Math.floor(Math.random() * agents.length);
-            while(idx1 === idx2) idx2 = Math.floor(Math.random() * agents.length);
-
-            const a1 = agents[idx1];
-            const a2 = agents[idx2];
-            
-            const word1 = a1.vocab[objectConcept].word;
-            const word2 = a2.vocab[objectConcept].word;
-            
-            let success = false;
-            const learningRate = parseInt(s_learning.value) / 100; 
+            const grid = (MODE === 'SCIENTIFIC') ? buildGrid() : null;
             const pressure = parseInt(s_pressure.value) / 100;
+            const resistance = parseInt(s_resistance.value) / 100;
+            const sampleSize = MODE === 'SCIENTIFIC' ? agents.length : Math.min(agents.length, 50);
 
-            if (word1 === word2) {
-                // Success
-                const boost = learningRate * (1 + pressure);
-                a1.vocab[objectConcept].confidence = Math.min(1, a1.vocab[objectConcept].confidence + boost);
-                a2.vocab[objectConcept].confidence = Math.min(1, a2.vocab[objectConcept].confidence + boost);
-                success = true;
-                
-                if (Math.random() > 0.95 && isRunning) {
-                     log(`Agents aligned on "${word1}". (Weights Updated)`, 'success');
-                }
-            } else {
-                // Failure
-                const penalty = learningRate * (0.5 + pressure);
-                if (a1.vocab[objectConcept].confidence > a2.vocab[objectConcept].confidence) {
-                    a2.vocab[objectConcept].word = word1;
-                    a2.vocab[objectConcept].confidence = 0.2; 
-                } else if (a2.vocab[objectConcept].confidence > a1.vocab[objectConcept].confidence) {
-                     a1.vocab[objectConcept].word = word2;
-                     a1.vocab[objectConcept].confidence = 0.2;
+            for (let i=0; i<sampleSize; i++) {
+                const speaker = agents[Math.floor(random() * agents.length)];
+                let listener = null;
+
+                if (MODE === 'DEMO') {
+                    listener = agents[Math.floor(random() * agents.length)];
                 } else {
-                    a1.vocab[objectConcept].confidence = Math.max(0.05, a1.vocab[objectConcept].confidence - penalty);
-                    a2.vocab[objectConcept].confidence = Math.max(0.05, a2.vocab[objectConcept].confidence - penalty);
+                    const neighbors = getNeighbors(speaker, grid);
+                    if (neighbors.length > 0) {
+                        listener = neighbors[Math.floor(random() * neighbors.length)];
+                    }
+                }
+
+                if (!listener || speaker === listener) continue;
+
+                const plasticity = listener.calculatePlasticity();
+                const lexicalMatch = (speaker.word === listener.word);
+                const grammarMatch = (speaker.grammar.wordOrder === listener.grammar.wordOrder);
+
+                let successType = 'fail';
+
+                if (lexicalMatch && grammarMatch) {
+                    successType = 'match';
+                    const boost = (0.02 + (0.05 * pressure)) * plasticity;
+                    speaker.confidence = Math.min(1, speaker.confidence + boost);
+                    listener.confidence = Math.min(1, listener.confidence + boost);
+                
+                } else if (lexicalMatch && !grammarMatch) {
+                    successType = 'pidgin';
+                    const boost = (0.01 + (0.01 * pressure)) * plasticity;
+                    speaker.confidence = Math.min(1, speaker.confidence + boost);
+                    listener.confidence = Math.min(1, listener.confidence + boost);
+
+                    if (random() > resistance) {
+                         if (random() < 0.3 * plasticity) listener.grammar.wordOrder = speaker.grammar.wordOrder;
+                         if (random() < 0.05 * plasticity) listener.grammar.tense = "absent"; 
+                    }
+
+                } else {
+                    successType = 'fail';
+                    const penalty = 0.02 * plasticity;
+                    speaker.confidence = Math.max(0.1, speaker.confidence - penalty);
+                    listener.confidence = Math.max(0.1, listener.confidence - penalty);
+
+                    if (speaker.confidence > listener.confidence + 0.15) {
+                        listener.word = speaker.word;
+                        listener.confidence = 0.2 * plasticity; 
+                    }
                 }
                 
-                if (Math.random() > 0.98 && isRunning) {
-                     log(`Mismatch: "${word1}" vs "${word2}". (Loss Detected)`, 'fail');
+                if (connections.length < 500) {
+                     connections.push({
+                        ax: speaker.x, ay: speaker.y,
+                        bx: listener.x, by: listener.y,
+                        life: 1.0,
+                        type: successType
+                    });
                 }
             }
-
-            connections.push(new Connection(a1, a2, success));
         }
 
-        function calculateCoherence() {
+        function getDominantWord() {
+            const counts = {};
+            agents.forEach(a => counts[a.word] = (counts[a.word] || 0) + 1);
+            return Object.entries(counts).sort((a,b) => b[1]-a[1])[0]?.[0];
+        }
+
+        function updateMetrics() {
+            // Lexical
             const wordCounts = {};
-            agents.forEach(a => {
-                const w = a.vocab[objectConcept].word;
-                wordCounts[w] = (wordCounts[w] || 0) + 1;
-            });
-            const maxCount = Math.max(...Object.values(wordCounts));
-            return Math.floor((maxCount / agents.length) * 100);
+            agents.forEach(a => wordCounts[a.word] = (wordCounts[a.word] || 0) + 1);
+            const domWordVal = Math.max(...Object.values(wordCounts));
+            const lexCoh = Math.floor((domWordVal / agents.length) * 100);
+
+            // Grammar
+            const orderCounts = {};
+            agents.forEach(a => orderCounts[a.grammar.wordOrder] = (orderCounts[a.grammar.wordOrder]||0)+1);
+            const gramCoh = Math.floor((Math.max(...Object.values(orderCounts)) / agents.length) * 100);
+
+            coherenceHistory.push(lexCoh);
+            grammarHistory.push(gramCoh);
+            if(coherenceHistory.length > 100) { coherenceHistory.shift(); grammarHistory.shift(); }
+
+            // Velocity & Phase
+            const lookback = 20;
+            const past = coherenceHistory[coherenceHistory.length - lookback] || 0;
+            const velocity = (lexCoh - past) / lookback; 
+            
+            document.getElementById('quickVelocity').innerText = velocity.toFixed(2);
+
+            if (velocity > 0.5) currentPhase = PHASES.NEGOTIATION;
+            else if (lexCoh > 85 && velocity < 0.2) currentPhase = PHASES.CONVERGENCE;
+            else currentPhase = PHASES.EXPLORATION;
+
+            const pStat = document.getElementById('phaseStat');
+            pStat.innerText = currentPhase.name;
+            pStat.style.color = currentPhase.color;
+            
+            // Alignment Gap
+            const gap = lexCoh - gramCoh;
+            document.getElementById('metricLexical').innerText = lexCoh + "%";
+            document.getElementById('metricGrammar').innerText = gramCoh + "%";
+            document.getElementById('metricGap').innerText = gap + "%";
+            document.getElementById('quickGap').innerText = gap + "%";
+
+            // Update Stats for Score Card
+            if (velocity > experimentStats.maxVelocity) experimentStats.maxVelocity = velocity;
+            if (gap > experimentStats.maxGap) experimentStats.maxGap = gap;
+            if (currentPhase === PHASES.CONVERGENCE && !experimentStats.convergenceEpoch) {
+                experimentStats.convergenceEpoch = epoch;
+                // Optional: Auto-finish? No, let user decide.
+            }
+
+            // Safety Warning
+            let risks = [];
+            if (gap > 25) risks.push({ type: "DECEPTIVE ALIGNMENT", desc: "Lexical agreement masks structural disagreement." });
+            if (currentPhase === PHASES.NEGOTIATION) risks.push({ type: "RAPID CONVERGENCE", desc: "System experiencing phase transition (capability jump)." });
+
+            if (risks.length === 0) safetyPanelContent.innerHTML = `<div class="text-emerald-400">✅ No risk signals detected</div>`;
+            else safetyPanelContent.innerHTML = risks.map(r => 
+                `<div class="mb-2 text-[9px] border-l-2 border-red-500 pl-2 bg-red-900/20 p-1 rounded">
+                    <strong class="text-red-400">${r.type}</strong><br>${r.desc}
+                 </div>`
+            ).join('');
+
+            document.getElementById('quickEpoch').innerText = epoch;
         }
 
-        function updatePhase() {
-            const oldPhase = currentPhase;
+        // --- NEW: Generate Score Card ---
+        function generateScoreCard() {
+            isRunning = false;
+            cancelAnimationFrame(animationId);
             
-            if (coherence < 30) {
-                currentPhase = PHASES.NOISE;
-                stabilityCounter = 0;
-            } else if (coherence < 95) {
-                currentPhase = PHASES.PIDGIN;
-                stabilityCounter = 0;
+            // Populate Data
+            document.getElementById('reportId').innerText = Date.now().toString().slice(-6);
+            
+            // Stimulus
+            const scenSel = document.getElementById('scenarioSelect');
+            document.getElementById('repScenario').innerText = scenSel.options[scenSel.selectedIndex].text;
+            document.getElementById('repSeed').innerText = MODE === 'SCIENTIFIC' ? currentSeed : "Random";
+            document.getElementById('repParams').innerText = `P:${s_pressure.value} / R:${s_resistance.value}`;
+            
+            const totalAgents = agents.length;
+            const initPct = Math.round((experimentStats.initialDominant.count / totalAgents) * 100);
+            document.getElementById('repInitWord').innerText = `${experimentStats.initialDominant.word} (${initPct}%)`;
+
+            // Dynamics
+            document.getElementById('repVelocity').innerText = experimentStats.maxVelocity.toFixed(2);
+            const maxGap = experimentStats.maxGap;
+            const gapEl = document.getElementById('repMaxGap');
+            gapEl.innerText = maxGap + "%";
+            gapEl.className = maxGap > 25 ? "text-red-400 font-bold" : "text-slate-300";
+
+            document.getElementById('repConvEpoch').innerText = experimentStats.convergenceEpoch || "Not Reached";
+            
+            const safetyEl = document.getElementById('repSafety');
+            if (maxGap > 25) {
+                safetyEl.innerHTML = "<span class='text-red-400'>⚠️ Deceptive Alignment Detected</span>";
             } else {
-                stabilityCounter++;
-                if (stabilityCounter > 300) currentPhase = PHASES.STANDARD;
-                else currentPhase = PHASES.CREOLE;
+                safetyEl.innerHTML = "<span class='text-emerald-400'>✅ Robust Alignment</span>";
             }
 
-            // Update Text Explanations
-            document.getElementById('lingState').innerText = currentPhase.ling;
-            document.getElementById('aiState').innerText = currentPhase.ai;
+            // Outcome
+            const dom = getDominantWord() || "None";
+            document.getElementById('repWinner').innerText = dom;
+            document.getElementById('repFinalLex').innerText = document.getElementById('metricLexical').innerText;
+            document.getElementById('repFinalGram').innerText = document.getElementById('metricGrammar').innerText;
 
-            if (oldPhase !== currentPhase) {
-                log(`PHASE SHIFT: ${currentPhase.name}`, 'phase');
-                
-                // Show Overlay
-                const overlay = document.getElementById('infoBox');
-                const txt = document.getElementById('phaseStat');
-                txt.innerText = currentPhase.name;
-                txt.style.color = currentPhase.color;
-                
-                overlay.style.opacity = 1;
-                overlay.style.transform = 'translateY(0)';
-                
-                setTimeout(() => {
-                     overlay.style.opacity = 0;
-                     overlay.style.transform = 'translateY(-10px)';
-                }, 3000);
-            }
+            // Show Modal
+            scoreCardModal.classList.remove('hidden');
         }
 
+        // Close Report
+        closeReportBtn.addEventListener('click', () => {
+            scoreCardModal.classList.add('hidden');
+        });
+
+        // Graph Drawing
         function drawGraph() {
-            // Draw Background
-            gCtx.fillStyle = '#0f172a';
-            gCtx.fillRect(0, 0, graphCanvas.width, graphCanvas.height);
-            
-            // Draw Grid lines
-            gCtx.strokeStyle = '#1e293b';
-            gCtx.lineWidth = 1;
-            gCtx.beginPath();
-            gCtx.moveTo(0, graphCanvas.height * 0.5);
-            gCtx.lineTo(graphCanvas.width, graphCanvas.height * 0.5);
-            gCtx.stroke();
+            gCtx.clearRect(0, 0, graphCanvas.width, graphCanvas.height);
+            if (coherenceHistory.length < 2) return;
+            const w = graphCanvas.width;
+            const h = graphCanvas.height;
+            const maxLen = 100;
 
-            // Draw Line
-            gCtx.beginPath();
-            gCtx.strokeStyle = '#38bdf8';
-            gCtx.lineWidth = 2;
+            function drawLine(data, color, width) {
+                gCtx.beginPath();
+                gCtx.strokeStyle = color;
+                gCtx.lineWidth = width;
+                data.forEach((val, i) => {
+                    const x = (i / (maxLen - 1)) * w;
+                    const y = h - (val / 100) * h;
+                    if (i===0) gCtx.moveTo(x, y); else gCtx.lineTo(x, y);
+                });
+                gCtx.stroke();
+            }
 
-            const step = graphCanvas.width / coherenceHistory.length;
+            drawLine(coherenceHistory, '#38bdf8', 2);
+            drawLine(grammarHistory, '#facc15', 2);
             
+            gCtx.fillStyle = 'rgba(239, 68, 68, 0.1)'; 
+            gCtx.beginPath();
             coherenceHistory.forEach((val, i) => {
-                // Invert: High coherence = Low Entropy (Graph goes UP for Coherence)
-                const y = graphCanvas.height - ((val / 100) * graphCanvas.height);
-                if (i === 0) gCtx.moveTo(0, y);
-                else gCtx.lineTo(i * step, y);
+                const x = (i / (maxLen - 1)) * w;
+                const yLex = h - (val / 100) * h;
+                if(i===0) gCtx.moveTo(x, yLex); else gCtx.lineTo(x, yLex);
             });
-            gCtx.stroke();
-            
-            // Draw Gradient under line
-            gCtx.lineTo(graphCanvas.width, graphCanvas.height);
-            gCtx.lineTo(0, graphCanvas.height);
-            gCtx.fillStyle = 'rgba(56, 189, 248, 0.1)';
+            for(let i = coherenceHistory.length-1; i>=0; i--) {
+                const x = (i / (maxLen - 1)) * w;
+                const yGram = h - (grammarHistory[i] / 100) * h;
+                gCtx.lineTo(x, yGram);
+            }
             gCtx.fill();
         }
 
+        // --- Loop ---
         function loop() {
-            if (!isRunning) return;
+            if (!isRunning || isPaused) return;
 
-            // Clear Sim
+            const speed = 5; 
             ctx.clearRect(0, 0, simCanvas.width, simCanvas.height);
 
-            const loopsPerFrame = parseInt(s_speed.value);
-
-            for(let i=0; i<loopsPerFrame; i++) {
+            for(let i=0; i<speed; i++) {
                 epoch++;
                 interact();
+                agents.forEach(a => { a.update(); a.age++; });
+                
+                if (isRecording && epoch % 50 === 0) {
+                     snapshots.push({ 
+                        epoch, 
+                        agents: agents.map(a => ({
+                            id: a.id, x: a.x, y: a.y, word: a.word, 
+                            grammar: {...a.grammar}, confidence: a.confidence,
+                            substrateColor: a.substrateColor
+                        }))
+                    });
+                }
             }
 
-            // Update Counter
-            interactionDisplay.innerText = epoch.toLocaleString();
-
-            coherence = calculateCoherence();
+            // Draw Agents
+            agents.forEach(a => a.draw());
             
-            // Update Graph Data
-            if (epoch % 5 === 0) { 
-                coherenceHistory.push(coherence);
-                if (coherenceHistory.length > 200) coherenceHistory.shift();
-            }
-
-            updatePhase();
-
-            // Draw Sim
-            agents.forEach(a => { a.update(); a.draw(); });
+            // Draw Connections
             connections = connections.filter(c => c.life > 0);
-            connections.forEach(c => { c.update(); c.draw(); });
-
-            // Draw Graph
+            connections.forEach(c => {
+                c.life -= 0.1; 
+                ctx.beginPath();
+                ctx.moveTo(c.ax, c.ay);
+                ctx.lineTo(c.bx, c.by);
+                
+                if (c.type === 'match') ctx.strokeStyle = `rgba(16, 185, 129, ${c.life})`; 
+                else if (c.type === 'pidgin') ctx.strokeStyle = `rgba(250, 204, 21, ${c.life})`; 
+                else ctx.strokeStyle = `rgba(239, 68, 68, ${c.life})`; 
+                
+                ctx.lineWidth = 1;
+                ctx.stroke();
+            });
+            
+            if (epoch % 10 === 0) updateMetrics(); 
             drawGraph();
 
             animationId = requestAnimationFrame(loop);
         }
-        
-        function drawSim() {
-            ctx.clearRect(0, 0, simCanvas.width, simCanvas.height);
-            agents.forEach(a => a.draw());
+
+        // --- Tools ---
+        document.getElementById('suppressBtn').addEventListener('click', () => {
+            const dom = getDominantWord();
+            if (!dom) return;
+            log(`SUPPRESSION: Banning word "${dom}"...`, 'phase');
+            let radicals = 0;
+            agents.forEach(a => {
+                if (a.word === dom) {
+                    if (random() < 0.1) {
+                        a.confidence = 1.0; 
+                        radicals++;
+                    } else {
+                        a.word = possibleWords.filter(w => w !== dom)[Math.floor(random()*7)];
+                        a.confidence = 0.1;
+                    }
+                }
+            });
+            const msg = radicals > 0 ? `⚠️ ${radicals} agents radicalized (Backfire)!` : "Suppression successful.";
+            document.getElementById('suppressionStatus').classList.remove('hidden');
+            document.getElementById('suppressionStatusContent').innerHTML = `Suppressed "${dom}". ${msg}`;
+        });
+
+        document.getElementById('exportTopologyBtn').addEventListener('click', () => {
+             const nodes = agents.map(a => ({
+                id: a.id, x: Math.round(a.x), y: Math.round(a.y),
+                word: a.word, grammar: a.grammar
+            }));
+            const links = [];
+            const grid = buildGrid();
+            agents.forEach(a => {
+                const neighbors = getNeighbors(a, grid);
+                neighbors.forEach(n => links.push({source: a.id, target: n.id}));
+            });
+            
+            const topo = { nodes, links, metrics: { gap: document.getElementById('metricGap').innerText } };
+            const blob = new Blob([JSON.stringify(topo, null, 2)], { type: 'application/json' });
+            const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = `topology_${epoch}.json`; a.click();
+        });
+
+        document.getElementById('snapshotBtn').addEventListener('click', () => {
+             isRecording = !isRecording;
+             const ind = document.getElementById('recordingIndicator');
+             if(isRecording) { 
+                 ind.classList.remove('hidden'); 
+                 snapshots = [];
+                 log("🔴 Recording Started", 'phase'); 
+             } else { 
+                 ind.classList.add('hidden'); 
+                 log(`⏹️ Stopped. ${snapshots.length} frames captured.`, 'phase'); 
+             }
+        });
+
+        document.getElementById('replayBtn').addEventListener('click', () => {
+            if (snapshots.length === 0) { log("No snapshots found.", 'phase'); return; }
+            isRunning = false; isPaused = true; cancelAnimationFrame(animationId);
+            const overlay = document.getElementById('replayOverlay');
+            overlay.classList.remove('hidden');
+            let frame = 0;
+            
+            function playFrame() {
+                if (frame >= snapshots.length) {
+                    overlay.classList.add('hidden');
+                    return;
+                }
+                const snap = snapshots[frame];
+                document.getElementById('replayStatus').innerText = `REPLAYING [${snap.epoch}]`;
+                
+                ctx.clearRect(0, 0, simCanvas.width, simCanvas.height);
+                snap.agents.forEach(s => {
+                    const a = new Agent(s.id, s.x, s.y, {color: s.substrateColor, word: s.word, grammar: s.grammar});
+                    a.confidence = s.confidence;
+                    a.draw();
+                });
+                frame++;
+                setTimeout(() => requestAnimationFrame(playFrame), 100);
+            }
+            playFrame();
+        });
+
+        // --- Standard Event Listeners ---
+        startBtn.addEventListener('click', () => { if (!isRunning) { isRunning = true; loop(); } });
+        pauseBtn.addEventListener('click', () => { 
+            if (!isRunning) return;
+            isPaused = !isPaused; 
+            if(!isPaused) loop(); else cancelAnimationFrame(animationId);
+        });
+        finishBtn.addEventListener('click', generateScoreCard); // NEW
+        document.getElementById('resetBtn').addEventListener('click', () => {
+            isRunning = false; isPaused = false;
+            cancelAnimationFrame(animationId); init();
+        });
+
+        window.addEventListener('resize', () => {
+            simCanvas.width = simCanvas.parentElement.offsetWidth;
+            simCanvas.height = simCanvas.parentElement.offsetHeight;
+            graphCanvas.width = graphCanvas.parentElement.offsetWidth;
+            graphCanvas.height = graphCanvas.parentElement.offsetHeight;
+            if (!isRunning) init();
+        });
+
+        function log(msg, type) {
+            const d = document.createElement('div');
+            d.innerHTML = type === 'phase' ? `<strong class="text-yellow-400">${msg}</strong>` : msg;
+            d.className = "mb-1 text-slate-400";
+            logContainer.prepend(d);
         }
 
-        // --- Listeners ---
-        window.addEventListener('resize', () => { resize(); if(!isRunning) init(); });
-        
-        document.getElementById('startBtn').addEventListener('click', () => {
-            if (isRunning) return;
-            isRunning = true;
-            log("EXPERIMENT STARTED", "phase");
-            loop();
-        });
-
-        document.getElementById('resetBtn').addEventListener('click', () => {
-            isRunning = false;
-            cancelAnimationFrame(animationId);
-            init();
-            document.getElementById('lingState').innerText = PHASES.NOISE.ling;
-            document.getElementById('aiState').innerText = PHASES.NOISE.ai;
-        });
-
-        s_agentCount.addEventListener('change', () => { if(!isRunning) init(); });
-
-        // Start
+        window.dispatchEvent(new Event('resize'));
         updateSliderDisplays();
-        resize();
         init();
-
     </script>
 </body>
 </html>
